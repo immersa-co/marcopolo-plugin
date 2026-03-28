@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "marcopolo": {
+      "type": "http",
+      "url": "https://mcp.marcopolo.dev"
+    }
+  }
+}
