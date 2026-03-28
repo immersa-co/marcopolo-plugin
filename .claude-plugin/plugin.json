@@ -1,7 +1,7 @@
 {
   "name": "marcopolo",
-  "version": "1.0.0",
-  "description": "Query and analyze your company's data in a personal remote workspace",
+  "version": "2.0.0",
+  "description": "Secure, persistent remote workspace for analytics, dashboards, and automations across one or more company data connections",
   "author": {
     "name": "MarcoPolo",
     "url": "https://github.com/immersa-co"

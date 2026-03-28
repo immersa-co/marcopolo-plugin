@@ -1,6 +1,6 @@
 # MarcoPolo Plugin for Claude and Codex
 
-The MarcoPolo plugin connects Claude and Codex to your datasources through the MarcoPolo MCP server and adds shared skills that solve three problems with raw MCP connections: operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started/claude-plugin) for details.
+The MarcoPolo plugin connects Claude and Codex to a secure, persistent remote workspace for working with your company's data — querying connections, joining results across sources, building dashboards, and scheduling automations. It bundles the MarcoPolo MCP server plus shared skills that solve three problems with raw MCP connections: operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started) for details.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Plugins require admin privileges. Add this repo to your organization's private p
 
 #### Verify
 
-Run `/skills` in Claude Code. You should see `query-workflow`, `using-marcopolo`, and `workspace-navigation`.
+Run `/skills` in Claude Code. You should see `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, and `setup-automation`.
 
 ### Codex
 
@@ -69,23 +69,27 @@ Then:
 
 After installation, confirm the plugin exposes:
 
-- `query-workflow`
-- `using-marcopolo`
-- `workspace-navigation`
+- `using-marcopolo-workspace`
+- `using-connection-cli`
+- `setup-connection`
+- `query-and-analyze`
+- `build-dashboard`
+- `setup-automation`
 
 Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a Codex session in this repo.
 
 ## How to use it
 
-Once the plugin is installed, use Claude or Codex normally. The plugin adds the MarcoPolo MCP server plus the shared skills, so you can ask for data work in natural language without manually wiring tools together.
+Once the plugin is installed, use your client normally. The plugin adds the MarcoPolo MCP server plus the shared skills, so you can ask for data work in natural language without manually wiring tools together.
 
 Good first prompts:
 
-- `List the datasources available through MarcoPolo and tell me which one looks relevant for revenue reporting.`
-- `Use MarcoPolo to inspect the schema for the orders table before writing any SQL.`
-- `Query monthly revenue for the last 12 months and build a chart from the result.`
-- `Browse our storage datasource, find the latest CSV export, and summarize what is in it.`
-- `Create a recurring MarcoPolo automation that refreshes this report every weekday morning.`
+- `List the connections available through MarcoPolo and tell me which one looks relevant for revenue reporting.`
+- `Install a demo connection so I can try MarcoPolo without my own credentials.`
+- `Inspect the schema for the orders table before writing any SQL.`
+- `Query monthly revenue for the last 12 months and build a dashboard from the result.`
+- `Browse our storage connection, find the latest CSV export, and summarize what is in it.`
+- `Schedule a recurring job that refreshes this report every weekday morning.`
 
 Behavior by client:
 
@@ -94,12 +98,13 @@ Behavior by client:
 
 ## What you can do
 
-- **Query any datasource** - Ask questions in natural language. The AI writes and executes the correct SQL, caching results in DuckDB for follow-up analysis.
-- **Join data across sources** - Combine results from Snowflake, Salesforce, BigQuery, PostgreSQL, and more in a single analysis.
-- **Explore and understand data** - The AI reads your RULES.md business context and navigates schemas before querying.
-- **Work with cloud storage** - Browse, download, and process files from S3, Azure Blob, and Google Drive.
-- **Build visualizations** - Create dashboards and charts directly from query results.
-- **Automate data tasks** - Schedule recurring queries, reports, and pipelines.
+- **Query any connection** - Ask questions in natural language. The assistant writes query files in the workspace and executes them through the `connection` CLI; results are materialized into DuckDB for follow-up analysis.
+- **Join across connections** - Combine results from Snowflake, Salesforce, BigQuery, Postgres, and more through the workspace-local DUCKDB connection.
+- **Explore schemas** - The assistant refreshes metadata snapshots into `connections/<name>/metadata/` and reads them before writing queries.
+- **Work with cloud storage** - Browse, download, and upload files for connections that advertise those capabilities (S3, Azure Blob, Google Drive).
+- **Build dashboards** - Author `.dashboard` manifests plus `view.tsx` components and preview them interactively.
+- **Schedule recurring jobs** - Use the workspace `cron` CLI for managed recurring queries, refreshes, and pipelines.
+- **Install demo connections** - Try MarcoPolo with hosted demo data, no credentials needed.
 
 ## Plugin contents
 
@@ -108,24 +113,21 @@ Behavior by client:
 | **MCP Server** | Connects to `https://mcp.marcopolo.dev` |
 | **Claude plugin** | `.claude-plugin/plugin.json` |
 | **Codex plugin** | `.codex-plugin/plugin.json` |
-| **Skills** | `query-workflow`, `using-marcopolo`, `workspace-navigation` |
-| **Agent** | Data analyst agent with local/remote filesystem awareness |
+| **Agent** | `marcopolo` - data analyst with workspace-first defaults (Claude only) |
+| **Skills** | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, `setup-automation` |
 
-## MCP Tools
+## MCP tools
 
-The plugin provides access to the full MarcoPolo toolset:
+The plugin exposes four MCP tools. Almost everything else happens inside the workspace through the `connection` and `cron` CLIs invoked via `workspace_shell`.
 
-- `list_datasources()` - Discover available datasources
-- `get_schema()` - Explore datasource structure (databases, tables, columns)
-- `query()` - Execute queries against any datasource
-- `browse()` / `download()` - Navigate and fetch files from storage
-- `execute_command()` - Run shell commands in your secure workspace
-- `create_data_view()` - Build dashboards and visualizations
-- `generate_connector_url()` - Add new datasources
+- `workspace_shell(command, timeout=30)` - run any command in the remote workspace
+- `connection_setup(type, intent_text=None)` - generate a browser URL for credentialed connection setup
+- `install_demo_connection(demo_connection, display_name=None, intent_text=None)` - install a hosted demo connection
+- `preview_dashboard(path)` - open the interactive preview UI for a `.dashboard` manifest
 
 ## Documentation
 
-- [Plugin documentation](https://docs.marcopolo.dev/getting-started/claude-plugin)
+- [Plugin documentation](https://docs.marcopolo.dev/getting-started)
 - [Getting started](https://docs.marcopolo.dev/getting-started)
 - [MCP Tools Reference](https://docs.marcopolo.dev/how-it-works/tools)
 - [Security](https://docs.marcopolo.dev/security)
