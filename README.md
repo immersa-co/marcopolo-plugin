@@ -1,6 +1,24 @@
 # MarcoPolo Plugin for Claude
 
-The MarcoPolo plugin turns Claude into a data analyst that knows how to work with your company's data. It connects Claude to your datasources through the MarcoPolo MCP server and adds built-in skills that guide Claude through proven data workflows - reading your business context, exploring schemas, writing correct queries, and iterating on results.
+The MarcoPolo plugin connects Claude to your datasources through the MarcoPolo MCP server and adds skills that solve three problems with raw MCP connections: Claude operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started/claude-plugin) for details.
+
+## Installation
+
+### Claude Code
+
+```bash
+git clone https://github.com/immersa-co/marcopolo-plugin.git
+```
+
+Start Claude Code in the plugin directory or a parent directory. It detects the plugin automatically.
+
+### Claude Desktop / Claude.ai
+
+Plugins require admin privileges. Add this repo to your organization's private plugin marketplace, or download as a zip and upload through Plugins (Preview) settings.
+
+### Verify
+
+Run `/skills` in Claude Code. You should see `query-workflow`, `using-marcopolo`, and `workspace-navigation`.
 
 ## What you can do
 
