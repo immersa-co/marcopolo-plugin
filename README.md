@@ -1,10 +1,12 @@
-# MarcoPolo Plugin for Claude
+# MarcoPolo Plugin for Claude and Codex
 
-The MarcoPolo plugin connects Claude to your datasources through the MarcoPolo MCP server and adds skills that solve three problems with raw MCP connections: Claude operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started/claude-plugin) for details.
+The MarcoPolo plugin connects Claude and Codex to your datasources through the MarcoPolo MCP server and adds shared skills that solve three problems with raw MCP connections: operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started/claude-plugin) for details.
 
 ## Installation
 
-### Claude Code
+### Claude
+
+#### Claude Code
 
 ```bash
 git clone https://github.com/immersa-co/marcopolo-plugin.git
@@ -12,13 +14,83 @@ git clone https://github.com/immersa-co/marcopolo-plugin.git
 
 Start Claude Code in the plugin directory or a parent directory. It detects the plugin automatically.
 
-### Claude Desktop / Claude.ai
+#### Claude Desktop / Claude.ai
 
 Plugins require admin privileges. Add this repo to your organization's private plugin marketplace, or download as a zip and upload through Plugins (Preview) settings.
 
-### Verify
+#### Verify
 
 Run `/skills` in Claude Code. You should see `query-workflow`, `using-marcopolo`, and `workspace-navigation`.
+
+### Codex
+
+Codex uses `.codex-plugin/plugin.json` and reuses the same `skills/` and `.mcp.json` files as Claude. The `agents/` directory remains Claude-specific; Codex gets its behavior from the bundled skills and plugin manifest metadata.
+
+For Codex, the recommended setup is a personal install so the plugin is available across projects.
+
+```bash
+mkdir -p ~/.codex/plugins
+git clone https://github.com/immersa-co/marcopolo-plugin ~/.codex/plugins/marcopolo
+```
+
+Add or update `~/.agents/plugins/marketplace.json`:
+
+```json
+{
+  "name": "my-plugins",
+  "interface": {
+    "displayName": "My Plugins"
+  },
+  "plugins": [
+    {
+      "name": "marcopolo",
+      "source": {
+        "source": "local",
+        "path": "./.codex/plugins/marcopolo"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
+```
+
+Then:
+
+1. Restart Codex.
+2. Open the plugin directory in Codex.
+3. Select your personal marketplace.
+4. Verify `marcopolo` appears installed by default or install it manually if your local policy differs.
+
+#### Verify
+
+After installation, confirm the plugin exposes:
+
+- `query-workflow`
+- `using-marcopolo`
+- `workspace-navigation`
+
+Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a Codex session in this repo.
+
+## How to use it
+
+Once the plugin is installed, use Claude or Codex normally. The plugin adds the MarcoPolo MCP server plus the shared skills, so you can ask for data work in natural language without manually wiring tools together.
+
+Good first prompts:
+
+- `List the datasources available through MarcoPolo and tell me which one looks relevant for revenue reporting.`
+- `Use MarcoPolo to inspect the schema for the orders table before writing any SQL.`
+- `Query monthly revenue for the last 12 months and build a chart from the result.`
+- `Browse our storage datasource, find the latest CSV export, and summarize what is in it.`
+- `Create a recurring MarcoPolo automation that refreshes this report every weekday morning.`
+
+Behavior by client:
+
+- **Claude** uses the bundled skills and the `marcopolo` agent in this repo.
+- **Codex** uses the shared skills from `skills/` and the MCP server from `.mcp.json`; it does not use the Claude-specific `agents/` directory.
 
 ## What you can do
 
@@ -34,6 +106,7 @@ Run `/skills` in Claude Code. You should see `query-workflow`, `using-marcopolo`
 | Component | Description |
 |-----------|-------------|
 | **MCP Server** | Connects to `https://mcp.marcopolo.dev` |
+| **Codex plugin** | `.codex-plugin/plugin.json` |
 | **Skills** | `query-workflow`, `using-marcopolo`, `workspace-navigation` |
 | **Agent** | Data analyst agent with local/remote filesystem awareness |
 
