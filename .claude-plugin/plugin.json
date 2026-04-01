@@ -1,8 +1,16 @@
 {
   "name": "marcopolo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Query and analyze your company's data in a personal remote workspace",
   "author": {
-    "name": "MarcoPolo"
-  }
+    "name": "MarcoPolo",
+    "url": "https://github.com/immersa-co"
+  },
+  "homepage": "https://docs.marcopolo.dev/getting-started/claude-plugin",
+  "repository": "https://github.com/immersa-co/marcopolo-plugin",
+  "license": "Apache-2.0",
+  "keywords": ["data", "analytics", "mcp", "sql", "workspace"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "mcpServers": "./.mcp.json"
 }
