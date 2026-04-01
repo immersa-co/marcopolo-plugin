@@ -15,7 +15,7 @@ with.
 
 This session has two separate filesystems. Never confuse them.
 
-**Local** (the user's machine) — use Claude's built-in tools (Read, Write, Edit,
+**Local** (the user's machine) — use built-in tools (Read, Write, Edit,
 Bash, Glob, Grep) for local code, repos, and files.
 
 **Remote workspace** (/workspace) — use ONLY the marcopolo MCP tools:

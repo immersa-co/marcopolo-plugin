@@ -1,12 +1,12 @@
 {
   "name": "marcopolo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Query and analyze your company's data in a personal remote workspace",
   "author": {
-    "name": "Immersa",
+    "name": "MarcoPolo",
     "url": "https://github.com/immersa-co"
   },
-  "homepage": "https://docs.marcopolo.dev/getting-started/claude-plugin",
+  "homepage": "https://docs.marcopolo.dev/getting-started/codex-plugin",
   "repository": "https://github.com/immersa-co/marcopolo-plugin",
   "license": "Apache-2.0",
   "keywords": [
@@ -22,7 +22,7 @@
     "displayName": "MarcoPolo",
     "shortDescription": "Codex access to MarcoPolo data workflows",
     "longDescription": "Query datasources and work safely inside the MarcoPolo remote workspace using shared skills and MCP configuration.",
-    "developerName": "Immersa",
+    "developerName": "MarcoPolo",
     "category": "Productivity",
     "brandColor": "#4b1635",
     "composerIcon": "./assets/mp-symbol.png",

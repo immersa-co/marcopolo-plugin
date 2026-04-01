@@ -1,6 +1,6 @@
 ---
 name: workspace-navigation
-description: How to use marcopolo MCP tools correctly in Claude Code. Use when working with marcopolo tools, the remote workspace, datasources, or data analysis.
+description: How to use marcopolo MCP tools correctly. Use when working with marcopolo tools, the remote workspace, datasources, or data analysis.
 ---
 
 # MarcoPolo tools and the remote workspace

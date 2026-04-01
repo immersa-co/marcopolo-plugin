@@ -94,9 +94,9 @@ Behavior by client:
 
 ## What you can do
 
-- **Query any datasource** - Ask questions in natural language. Claude writes and executes the correct SQL, caching results in DuckDB for follow-up analysis.
+- **Query any datasource** - Ask questions in natural language. The AI writes and executes the correct SQL, caching results in DuckDB for follow-up analysis.
 - **Join data across sources** - Combine results from Snowflake, Salesforce, BigQuery, PostgreSQL, and more in a single analysis.
-- **Explore and understand data** - Claude reads your RULES.md business context and navigates schemas before querying.
+- **Explore and understand data** - The AI reads your RULES.md business context and navigates schemas before querying.
 - **Work with cloud storage** - Browse, download, and process files from S3, Azure Blob, and Google Drive.
 - **Build visualizations** - Create dashboards and charts directly from query results.
 - **Automate data tasks** - Schedule recurring queries, reports, and pipelines.
@@ -106,6 +106,7 @@ Behavior by client:
 | Component | Description |
 |-----------|-------------|
 | **MCP Server** | Connects to `https://mcp.marcopolo.dev` |
+| **Claude plugin** | `.claude-plugin/plugin.json` |
 | **Codex plugin** | `.codex-plugin/plugin.json` |
 | **Skills** | `query-workflow`, `using-marcopolo`, `workspace-navigation` |
 | **Agent** | Data analyst agent with local/remote filesystem awareness |
