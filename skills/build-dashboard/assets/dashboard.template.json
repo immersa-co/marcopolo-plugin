@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "<dashboard-name>",
+  "title": "<Human-readable Title>",
+  "view": "view.tsx",
+  "datasets": {
+    "<dataset_key>": {
+      "source": "duckdb",
+      "query": "<select ... from ...>"
+    }
+  }
+}
