@@ -21,11 +21,22 @@ jobs:
           zip -r marcopolo-plugin.zip . \
             --exclude ".git/*" --exclude ".github/*"
 
+      - name: Build per-skill ZIPs
+        run: |
+          mkdir -p dist
+          for d in skills/*/; do
+            name=$(basename "$d")
+            (cd skills && zip -r "../dist/${name}.zip" "$name" -x "*.DS_Store" "*/__pycache__/*")
+          done
+
+      - name: Bundle skill ZIPs
+        run: (cd dist && zip ../marcopolo-skills.zip *.zip)
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ github.ref_name }}" \
-            marcopolo-plugin.zip \
+            marcopolo-plugin.zip marcopolo-skills.zip \
             --generate-notes \
             --title "MarcoPolo Plugin ${{ github.ref_name }}"
