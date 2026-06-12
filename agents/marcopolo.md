@@ -39,9 +39,11 @@ metadata, querying, browsing storage, scheduling jobs — runs through the
 Before authoring, read what the workspace already says:
 
 - `workspace_shell("cat /workspace/RULES.md")`
-- `workspace_shell("cat /workspace/workflows/README.md")`
 - For per-connection work: `connections/<name>/README.md`,
   `connections/<name>/RULES.md`, `connections/<name>/SYNTAX.md`
+
+Task-specific guidance lives in the installed Marcopolo plugin skills rather
+than workspace workflow docs.
 
 Existing query files in `connections/<name>/queries/` and metadata
 snapshots in `connections/<name>/metadata/` encode patterns that already
@@ -68,5 +70,7 @@ For detailed procedures, see the corresponding skill:
 - `using-connection-cli` — `connection` verb and flag reference
 - `setup-connection` — add a connection (demo or credentialed)
 - `query-and-analyze` — query, join through DuckDB, analyze workspace files
-- `build-dashboard` — `.dashboard` + `view.tsx` authoring
-- `setup-automation` — schedule recurring jobs and durable outputs
+- `build-dashboard` — dashboards and governed visual outputs backed by
+  Marcopolo data
+- `build-scheduled-pipeline` — end-to-end scheduled data or AI workflows
+- `setup-automation` — generic recurring job management with `cron`

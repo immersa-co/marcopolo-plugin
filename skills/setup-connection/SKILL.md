@@ -1,137 +1,83 @@
 ---
 name: setup-connection
-description: Adds a new connection to the MarcoPolo workspace — hosted demo connections (no credentials) and credentialed connections to databases, warehouses, APIs, and storage (Postgres, Snowflake, BigQuery, Salesforce, S3, Google Drive, etc.). Use this skill whenever the user mentions adding, connecting, installing, hooking up, or wiring up a datasource — even when they describe it informally ("connect my Snowflake", "try the demo data", "let me hook up our Salesforce", "I want to look at the data in S3"). Also use when troubleshooting `connection test` failures, expired credentials, or an OAuth flow that didn't finish.
+description: Adds or repairs a connection in the MarcoPolo workspace. Use this skill when the user wants demo data, a new credentialed datasource, or help fixing connection setup or credentials.
 ---
 
 # Set up a connection
 
-There are two paths: a **hosted demo connection** (no credentials, installs
-in one call) and a **credentialed connection** (the user opens a browser
-setup flow). Both end with the same verification steps inside the workspace.
+Use this skill when the user needs a new data source in MarcoPolo or when an
+existing connection needs credential repair.
 
-The in-workspace canonical reference is `/workspace/workflows/setup-connection.md`.
+## Preferred surfaces
 
-## Path A — install a hosted demo connection
+- hosted demo data: `install_demo_connection(...)`
+- credentialed connection setup: `connection_setup(...)`
+- `connection add --type ...` is a lower-level CLI fallback, not the preferred
+  interactive path from an agent session
 
-Use this when the user wants to try MarcoPolo without bringing their own
-credentials, or asked for a specific demo dataset.
+## Recommended flow
 
-Call the MCP tool directly:
+### Option A: install hosted demo data
 
-```
+Use this when the user wants sample data and no user-owned credentials are
+required.
+
+```text
 install_demo_connection(
-  demo_connection="<id-or-natural-language>",
-  intent_text="<optional free text>",
-  display_name="<optional friendly name>",
+  demo_connection="<demo-id-or-natural-language-request>",
+  display_name="<optional-friendly-name>",
+  intent_text="<optional-clarification>"
 )
 ```
 
-Behavior:
+On success:
 
-- If `demo_connection` matches a known demo id, it installs immediately.
-- If ambiguous, the response has `success: false`, `resolution_mode:
-  "ambiguous"`, and `available_demo_connections: [{id, label, description, type}, ...]`.
-  Show the user the choices and call again with a specific `id`.
-- If unknown, the response includes `available_demo_connections` you can
-  offer the user.
+1. Run `workspace_shell("connection list --json")` to confirm the connection is visible
+2. Run `workspace_shell("connection test <name> --json")` if credential behavior is unclear
+3. Run `workspace_shell("connection describe <name> --json")` if query authoring needs schema or file metadata
+4. Read `connections/<name>/README.md`, `connections/<name>/RULES.md`, and `connections/<name>/SYNTAX.md`
 
-On success, run the post-install verification (below).
+### Option B: add a credentialed connection
 
-## Path B — add a credentialed connection
-
-Use this when the user has their own database, warehouse, API, or storage
+Use this when the user has a real database, warehouse, SaaS app, or storage
 account.
 
-1. Generate the setup URL via the MCP tool.
+1. Generate the setup flow with:
 
-   ```
+   ```text
    connection_setup(type="<canonical-type>", intent_text="<optional free text>")
    ```
 
-   `type` should be a canonical type value (`pg`, `mysql`, `snowflake`,
-   `bigquery`, `s3`, `google_drive`, `salesforce`, `local_file`, etc.). If
-   unsure, pass the user's words as `intent_text` and a best-guess `type` —
-   the tool will resolve via intent if `type` is non-canonical. If still
-   unknown, the response returns `valid_types` and `suggested_types`; pick
-   from those and retry.
+2. Surface the returned `url`, `instructions`, and `next_actions` to the user
+3. Wait for the user to complete the browser flow
+4. Confirm the connection appears with `workspace_shell("connection list --json")`
+5. Read the new connection docs under `connections/<name>/`
+6. Run `workspace_shell("connection test <name> --json")` when credential behavior is unclear
+7. Run `workspace_shell("connection describe <name> --json")` when workspace query authoring needs metadata snapshots
 
-   On success, the response includes:
-   - `url` — open this in a browser; the user signs in and configures
-     credentials
-   - `workflow_type` — typically `oauth` or `configure`
-   - `instructions` and `next_actions` — surface these to the user
-   - `configuration_schema` (for `configure` workflows) — the fields the
-     setup UI will collect
-   - `workspace_ssh_keypair` (for connections that support SSH tunnelling)
-     — show the public key so the user can authorize it on their bastion
+## Post-setup checks
 
-2. Surface the URL to the user and wait. Do not try to complete setup from
-   the session — the user has to click through the browser flow.
+- rerun `workspace_shell("connection list --json")` after setup
+- verify credentials with `workspace_shell("connection test <name> --json")`
+- seed or refresh metadata with `workspace_shell("connection describe <name> --json")`
+- read `connections/<name>/README.md`, `connections/<name>/RULES.md`, and `connections/<name>/SYNTAX.md` before first query authoring
 
-3. Once the user says they're done, confirm the connection is visible.
+## Failure routing
 
-   ```
-   workspace_shell("connection list --json")
-   ```
+- if `install_demo_connection(...)` is ambiguous, surface the returned demo
+  choices and retry with a specific id
+- if `connection_setup(...)` cannot resolve the type, use the returned
+  `valid_types` or `suggested_types` and retry
+- if `connection test ...` fails after setup, send the user back through
+  `connection_setup(...)` for credential repair
+- if the connection does not appear in `connection list --json` immediately
+  after setup, wait briefly and retry before escalating
 
-   If it doesn't appear yet, wait briefly and retry — provisioning can take
-   a moment.
+## Notes
 
-## Post-install verification (both paths)
-
-1. Verify credentials.
-
-   ```
-   workspace_shell("connection test <name> --json")
-   ```
-
-   On failure, surface `error` and `message` to the user. For credential
-   issues, send them back through `connection_setup` to update credentials.
-
-2. Read the seeded connection docs.
-
-   ```
-   workspace_shell("cat connections/<name>/README.md connections/<name>/SYNTAX.md connections/<name>/RULES.md")
-   ```
-
-   The `README.md` lists the connection's authoritative `capabilities`. Note
-   them before doing anything else with the connection.
-
-3. Write initial metadata snapshots.
-
-   ```
-   workspace_shell("connection describe <name> --json")
-   ```
-
-   This populates `connections/<name>/metadata/`. The snapshot files become
-   the default in-workspace reference for query authoring.
-
-4. Confirm the directory shape.
-
-   ```
-   workspace_shell("ls connections/<name>/")
-   ```
-
-   Expect: `README.md`, `RULES.md`, `SYNTAX.md`, `queries/`, `metadata/`,
-   `profile/`, `scratch/`.
-
-## Troubleshooting
-
-- **`connection_setup` returns `Unknown connection type`.** The response
-  includes `valid_types` and `suggested_types`. Pick a canonical value and
-  retry. If user intent is natural language, also pass `intent_text`.
-- **`install_demo_connection` returns `ambiguous`.** Surface
-  `available_demo_connections` to the user and retry with a specific id.
-- **`connection test` fails after setup.** Likely cause: incomplete browser
-  flow, wrong host/port, or missing network access. Surface the error
-  message to the user; for credential changes, rerun `connection_setup` to
-  reissue the setup URL.
-- **Connection not visible in `connection list --json`.** Wait and retry —
-  provisioning may still be running. If it persists, surface that to the
-  user.
-
-## Pointers
-
-- writing the first query → `query-and-analyze`
-- per-verb flag reference → `using-connection-cli`
-- workspace layout → `using-marcopolo-workspace`
+- use canonical connection types when known
+- `connection test ...` is a diagnostic step, not required for the normal MCP
+  `connections_list` / `data_query` path
+- `connection describe ...` is for workspace query authoring and debugging, not
+  for routine runtime data access in dashboards or generated apps
+- rerunning `connection describe ...` refreshes metadata snapshots in place

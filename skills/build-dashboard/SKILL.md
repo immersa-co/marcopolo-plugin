@@ -1,146 +1,253 @@
 ---
 name: build-dashboard
-description: Authors dashboard artifacts in the MarcoPolo workspace — a `.dashboard` manifest plus a `view.tsx` React component, previewed via the `preview_dashboard` MCP tool. Use this skill whenever the user wants any durable visual output — charts, dashboards, plots, graphs, visualizations, reports — even if they say "just show me a chart" or "plot this" without using the word "dashboard". Also use when iterating on the look of an existing dashboard or wiring up a new dataset.
+description: Build a dashboard from governed Marcopolo data. Use when the user asks for a dashboard, visualization, insight, live artifact, remote artifact, explorable report, or runnable dashboard app backed by Marcopolo connections.
 ---
 
-# Build a dashboard
+# Build Dashboard
 
-A dashboard is the right surface when the user wants a durable visual
-artifact they can refine during design and view again later. The
-in-workspace canonical reference is `/workspace/workflows/build-dashboard.md`.
+Build a visualization backed by Marcopolo data. First determine whether the
+user needs:
 
-## Authoring contract
+- a transient inline visualization for the current conversation
+- a persistent dashboard or app that can be revisited, refreshed, or shared
 
-A dashboard is two files under `artifacts/dashboards/`:
+Do not assume the current assistant or runtime supports a native live-artifact
+surface, browser-executable tool bridge, local app execution, or code hosting.
+Infer capabilities from observable behavior and available tools. If the
+environment is ambiguous, ask the user which deliverable they want instead of
+guessing.
 
-- `<name>.dashboard` — a JSON manifest declaring metadata and named DuckDB
-  datasets
-- `view.tsx` (or `shared/view.tsx`) — a React component that renders the data
+## Output Modes
 
-The split exists for a reason: the manifest is the trusted authoring surface
-and the only thing `preview_dashboard` looks at. MarcoPolo resolves the
-manifest's `datasets` against DuckDB and passes the results in as the `data`
-prop on the React component. That separation keeps `view.tsx` pure
-presentation, makes the data dependencies inspectable, and lets the same
-view re-render against fresh data without code changes.
+### `inline_snapshot`
 
-Practical implications:
+Use this mode when the user wants a quick chart, comparison, summary, or visual
+explanation in the current conversation.
 
-- The manifest has the `.dashboard` extension. Other extensions are not
-  picked up by `preview_dashboard`.
-- The manifest points at a relative React view file (commonly `view.tsx`
-  next to it).
-- Datasets are declared in the manifest. Don't fetch or query inside
-  `view.tsx` — there's no assistant or workspace context at render time.
-- `view.tsx` exports a default React component that takes `{ data,
-  metadata }`.
-- Use only `react` and `recharts` imports unless the workspace's `RULES.md`
-  explicitly allows others — other libraries may not be available in the
-  preview environment.
-- Preview and share through the manifest, not through `view.tsx` directly.
+Properties:
 
-## Templates
+- one-off
+- embedded snapshot data
+- no live refresh
+- no persistent asset required
 
-Two starter files live alongside this skill:
+### `host_native_live_artifact`
 
-- `assets/dashboard.template.json` — the `.dashboard` manifest shape
-- `assets/view.template.tsx` — a minimal React view component using
-  `recharts`
+Use this mode only when the current environment already provides a persistent
+interactive artifact surface with built-in authenticated tool access to
+Marcopolo.
 
-Read them when authoring and adapt rather than reinvent.
+Properties:
 
-## Authoring workflow
+- live data on refresh
+- revisitable in the host
+- possibly shareable through the host
 
-1. **Make the data queryable through DUCKDB first.**
-   Dashboards resolve datasets against DuckDB, so the manifest's `query`
-   field has to run cleanly there. For results from upstream connections,
-   run `connection query <name> --file ...` first — each materializes a
-   DuckDB relation you can then reference in the manifest. See
-   `query-and-analyze` for the full flow.
+Rules:
 
-2. **Create `artifacts/dashboards/` and write the manifest.**
+- use the host's existing artifact or tool-binding contract only
+- rely on the host's existing auth or session flow
+- do not invent custom API bridges, browser-only Marcopolo access, or
+  undocumented runtime globals
 
-   ```
-   workspace_shell("mkdir -p artifacts/dashboards")
-   workspace_shell("""cat > artifacts/dashboards/<name>.dashboard <<'JSON'
-   {
-     "version": 1,
-     "name": "<name>",
-     "title": "<Title>",
-     "view": "view.tsx",
-     "datasets": {
-       "<dataset_key>": {
-         "source": "duckdb",
-         "query": "<sql>"
-       }
-     }
-   }
-   JSON""")
-   ```
+### `local_runnable_app`
 
-3. **Write `view.tsx` next to the manifest.**
+Use this mode when the environment can generate and run a full-stack app on the
+user's machine, or when the user explicitly wants a local live app.
 
-   ```
-   workspace_shell("""cat > artifacts/dashboards/view.tsx <<'TSX'
-   import React from "react";
-   import { ... } from "recharts";
+Properties:
 
-   export default function Dashboard({ data, metadata }) {
-     return (...);
-   }
-   TSX""")
-   ```
+- browser UI plus server-side backend
+- Marcopolo API token stays server-side
+- live data fetched on demand
+- local execution, not inherently shareable
 
-   Reference dataset keys you declared in the manifest (e.g.,
-   `data.<dataset_key>`). Every key the view reads from `data` must appear
-   in the manifest's `datasets`.
+### `code_only_app`
 
-4. **Preview through the MCP tool.**
+Use this mode when the environment can generate code but cannot reliably run or
+host it for the user.
 
-   ```
-   preview_dashboard(path="artifacts/dashboards/<name>.dashboard")
-   ```
+Properties:
 
-   This opens the interactive preview UI, resolves manifest datasets
-   through DuckDB, and renders `view.tsx` with the results.
+- generated full-stack app source
+- user must configure env vars and run it
+- best suited to technical users
 
-5. **Iterate the same artifact.**
-   Edit the existing `view.tsx` rather than creating variants — the user
-   wants one durable dashboard, not many. Update the manifest when the
-   dashboard's data needs change. If the user explicitly asks for
-   alternatives (e.g., "show me a line chart version"), then create a
-   second manifest.
+## Capability Check
 
-## Design guidance
+Before building a persistent dashboard, determine which capabilities are
+actually available:
 
-- **Move data shaping upstream.** SQL in the manifest, saved DUCKDB
-  queries under `connections/DUCKDB/queries/`, or scripts under `scripts/`
-  are all easier to reason about, test, and reuse than logic inside
-  `view.tsx`. Reach for the view only for layout and presentation.
-- **Recurring refresh logic doesn't belong here.** A dashboard renders
-  whatever data exists when you preview it. To keep the data fresh on a
-  schedule, see `setup-automation` — it runs the upstream queries in the
-  background.
-- **Read the workspace's top-level `RULES.md`** before authoring. It may
-  define visual conventions, allowed libraries, or naming rules for
-  artifacts that override the defaults here.
+- Can the environment render a persistent interactive artifact with native tool bindings?
+- Can the environment run local files or processes and preview a web app?
+- Can the environment only generate code but not execute it?
+- Can the environment only display inline chat visuals?
 
-## Common pitfalls
+If these capabilities are not clear from visible tools or host behavior, do not guess. Ask the user to choose one of:
 
-- **Querying inside the component.** The view receives data via the
-  `data` prop. There's no assistant, no `connection`, no DuckDB at render
-  time — only what the manifest resolved.
-- **Mismatched dataset keys.** If `view.tsx` reads `data.foo` but the
-  manifest declares `bar`, the view sees `undefined`. Keys must match.
-- **Wrong manifest extension.** `preview_dashboard` only matches files
-  ending in `.dashboard`.
-- **Importing beyond `react` and `recharts`.** The preview environment
-  may not have your library. Stick to those two unless `RULES.md` says
-  otherwise.
+- quick inline chart
+- persistent live dashboard in the current environment
+- local runnable app
+- code only
 
-## Pointers
+## Defaults
 
-- producing the upstream DuckDB relations → `query-and-analyze`
-- per-verb flag reference → `using-connection-cli`
-- scheduling a recurring refresh of the underlying data → `setup-automation`
-- workspace layout (where `artifacts/dashboards/` sits) → `using-marcopolo-workspace`
+- If the user asks for a chart or visualization without asking for persistence, use `inline_snapshot`.
+- If the user asks for something reusable, refreshable, or shareable and the
+  host-native live-artifact capability is clearly available, use  `host_native_live_artifact`.
+- If the user asks for a live app and local code execution is available, use
+  `local_runnable_app`.
+- If the user asks for a live app but only code generation is available, use
+  `code_only_app`.
+- If no supported live runtime exists, do not fake one. Fall back to
+  `inline_snapshot` or a static artifact, or explain the limitation clearly.
+
+## Inputs
+
+Get the minimum missing details:
+
+- Goal and audience.
+- Connection or data domain.
+- Metrics, filters, time range, and row limits.
+- Desired output mode, if the user's request does not make it clear.
+- Freshness: live query, reusable query file, or materialized result.
+
+Do not ask for raw datasource credentials in chat. If connection access is
+missing, hand off to the connection setup or sharing flow. For generated live
+apps, use a Marcopolo developer API token supplied by the runtime environment,
+not an endpoint or token entered into the dashboard UI.
+
+## Data Contract
+
+Use:
+
+- `connections_list` to discover visible connections.
+- `data_query` to fetch bounded dashboard data.
+
+Treat `data_query` results as an envelope object, not a bare row array. The
+canonical shape is `{ rows: [...] }`, typically alongside fields such as
+`success`. Host runtimes that call Marcopolo through MCP may wrap that result
+one level deeper before generated code sees it. Normalize the tool result into
+a plain `rows[]` array before iterating, charting, or rendering.
+
+`data_query` requires exactly one query source:
+
+- `query`: inline query text. Prefer this for generated apps and short artifact
+  bindings.
+- `query_file`: workspace-relative query file path. Use this when a reusable
+  query already exists or the LLM intentionally authored one.
+
+Always include `connection_name`, `max_rows`, and optional `params`.
+
+## Workflow
+
+1. Classify the request into one of the output modes before building.
+2. Discover visible connections with `connections_list`.
+3. Pick bounded datasets: prefer aggregates, explicit filters, and `LIMIT`.
+4. Use inline `query` unless a reusable workspace query file is clearly useful.
+5. Normalize each `data_query` result into a plain `rows[]` array before
+   passing data into tables, chart components, or row iteration.
+6. Build loading, empty, permission-error, and query-error states.
+7. Keep raw datasource credentials out of the artifact or generated code.
+8. Verify the raw tool-result shape first, then verify the normalized rows
+   return the expected columns and row counts.
+9. Match the output packaging to the environment's actual capabilities instead
+   of assuming a live-artifact surface, MarcoPolo API bridge, or browser-only
+   live fetch path.
+
+Use `workspace_shell(...)` only for workspace authoring or debugging, such as
+creating a query file, probing query behavior, using DuckDB, or inspecting
+metadata when needed. Do not make runtime dashboards fetch data through
+`workspace_shell(...)`.
+
+## Mode Guidance
+
+### `inline_snapshot`
+
+- query bounded data
+- embed only the data needed for the visualization
+- clearly present the result as a snapshot, not a live dashboard
+- prefer this mode for casual exploratory analysis
+
+### `host_native_live_artifact`
+
+If the current environment exposes a native artifact or tool-binding surface,
+produce the shape that environment expects, with dataset bindings that call:
+
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "data_query",
+    "arguments": {
+      "connection_name": "SALES",
+      "query": "select week, sum(revenue) as revenue from revenue group by week order by week limit 12",
+      "max_rows": 500
+    }
+  }
+}
+```
+
+Rules:
+
+- use only the runtime or tool-binding mechanism the current host already
+  exposes
+- rely on host-provided auth or session flow
+- do not embed datasource credentials or Marcopolo API tokens in client code
+- do not generate arbitrary HTML that assumes an undocumented browser bridge
+  exists
+
+### `local_runnable_app`
+
+Use this mode when the environment can run local code and the user wants a live app they can open in a browser.
+
+Rules:
+
+- browser UI must call only the app's own server routes or server functions
+- server-side code calls the Marcopolo MCP server using JSON-RPC `tools/call`
+  with `name: "data_query"`
+- read `MARCOPOLO_MCP_URL` and `MARCOPOLO_API_TOKEN` from environment
+- send `Authorization: Bearer <token>` from server-side code only
+- keep the token out of client bundles and logs
+- do not invent new Marcopolo API routes, bridge endpoints, or alternate
+  transport contracts
+
+### `code_only_app`
+
+Use the same architecture as `local_runnable_app`, but deliver code plus clear
+run instructions instead of assuming the environment can execute it.
+
+Rules:
+
+- state exactly which environment variables the user must configure
+- state how to start the server
+- make it clear that the result is live only after the user runs the app
+
+If the environment supports neither native tool binding nor an existing
+server-backed live path, fall back to a static artifact backed by a
+materialized query result and state that freshness is snapshot-based.
+
+## Generated App Guidance
+
+Generated code should include a small normalization layer between the MCP tool
+result and the visualization:
+
+- if the parsed result is already an array, use it
+- else if it has `rows` and `rows` is an array, use `result.rows`
+- else if it has `data.rows` and that is an array, use `result.data.rows`
+- else fail with a clear error that includes the unexpected response shape
+
+Do not assume the parsed MCP response is directly iterable.
+
+## Final Response
+
+Always include:
+
+- which output mode was chosen
+- whether the result is live or snapshot-based
+- what runtime assumptions were used
+- whether the output is shareable
+- output location or code location
+- data sources and `data_query` bindings
+- freshness model
+- validation result

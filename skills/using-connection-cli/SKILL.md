@@ -1,78 +1,58 @@
 ---
 name: using-connection-cli
-description: Reference for the in-workspace `connection` CLI — verb shape, JSON envelope, the capability rule, and per-verb flag details. Use this skill whenever any `connection` verb (`list`, `add`, `test`, `describe`, `query`, `browse`, `download`, `upload`) is about to run, when looking up flags, when checking whether a verb is allowed by a connection's capabilities, or when reading the JSON response. Consult it even for routine commands — guessing flag names or capability-gating leads to wasted work and surprising failures.
+description: Reference for the in-workspace `connection` CLI. Use this skill when looking up available verbs, flags, response shape, capability-gated behavior, or live help for `connection` commands.
 ---
 
 # Using the `connection` CLI
 
-The `connection` CLI is the verb surface for all connection work inside
-the MarcoPolo workspace. It runs in the workspace pod; from a session,
-invoke it through `workspace_shell`:
+This is the dedicated `connection` command reference skill. Keep detailed
+verb, flag, and response-shape guidance here rather than spreading it across
+task-oriented skills or workflow docs.
 
-```
+Run the CLI through `workspace_shell(...)`:
+
+```text
 workspace_shell("connection <verb> [args] --json")
 ```
 
-Always pass `--json`. The output is then a structured envelope you can
-parse — without `--json` you get human-formatted text that's harder to
-work with programmatically.
-
-## JSON envelope
-
-Every `--json` response has at least:
-
-```json
-{ "success": true | false, "operation": "<verb>", ... }
-```
-
-On failure: `error`, usually `message`, and often `next_actions` and
-(for unknown types) `suggested_types`. On success: verb-specific fields
-documented in the per-verb references below.
+Always prefer `--json` unless a workflow explicitly needs another format.
 
 ## Capability rule
 
-`connection list --json` returns each connection's `capabilities` array.
-That list is **authoritative** — never call `browse`, `download`, or
-`upload` on a connection unless the verb appears in its capabilities.
-
-The reason: capabilities depend on connection type, the user's auth
-state, and platform configuration. Calling a non-advertised verb wastes
-work, may produce confusing errors, and clutters the workspace's audit
-trail. The `connections/<name>/README.md` file mirrors the same
-capabilities — both come from the same source.
+`workspace_shell("connection list --json")` returns each connection's
+`capabilities` array. That list is authoritative: do not call `browse`,
+`download`, or `upload` unless the verb appears in the selected connection's
+capabilities.
 
 ## Verbs at a glance
 
 | Verb | What it does | Reference |
 |---|---|---|
-| `list` | Discover connections + capabilities | `references/list.md` |
+| `list` | Discover connections and capabilities | `references/list.md` |
 | `add` | Get a browser setup URL for a credentialed connection | `references/add.md` |
 | `test` | Verify stored credentials | `references/test.md` |
 | `describe` | Write metadata snapshots into `connections/<name>/metadata/` | `references/describe.md` |
-| `query` | Execute a saved query file; materialize result into DuckDB | `references/query.md` |
-| `browse` (gated) | List provider-side files for storage connections | `references/browse.md` |
-| `download` (gated) | Fetch a provider file into the workspace | `references/download.md` |
-| `upload` (gated) | Push a workspace file to the provider | `references/upload.md` |
+| `query` | Execute a saved query file and materialize the result into DuckDB | `references/query.md` |
+| `browse` | List provider-side files for storage connections | `references/browse.md` |
+| `download` | Fetch a provider file into the workspace | `references/download.md` |
+| `upload` | Push a workspace file to the provider | `references/upload.md` |
 
-Read the per-verb reference before running a verb you haven't run
-recently, especially for flags. The references include the exact
-response shape, common pitfalls, and follow-on commands.
+## Response shape
 
-## Self-discovery
+Every `--json` response includes at least:
 
-When in doubt, ask the CLI directly:
-
+```json
+{ "success": true | false, "operation": "<verb>", ... }
 ```
+
+On failure, expect `error` and usually `message`. On success, use the
+per-verb references for the exact payload shape.
+
+## Live help
+
+Use live CLI help as the source of truth when flags may have changed:
+
+```text
 workspace_shell("connection --help")
 workspace_shell("connection <verb> --help")
 ```
-
-These are the live source of truth for flags. Prefer them over guessing
-or relying on the references if the workspace platform may have moved
-ahead of this skill.
-
-## Pointers
-
-- adding a connection end to end → `setup-connection`
-- writing and running a query → `query-and-analyze`
-- workspace layout and where files belong → `using-marcopolo-workspace`

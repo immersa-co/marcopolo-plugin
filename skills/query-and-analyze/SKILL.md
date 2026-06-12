@@ -1,157 +1,76 @@
 ---
 name: query-and-analyze
-description: Queries connections, joins results across sources through DuckDB, and analyzes user-uploaded data files inside the MarcoPolo remote workspace. Use this skill whenever the user wants to look at, count, summarize, filter, group, join, aggregate, compare, or analyze data — even when they describe the request informally ("how many users last week?", "pull the revenue numbers", "what's our churn?", "compare the two tables", "rank these by X") and even when they don't explicitly say "query" or "SQL". Also use when exploring a connection's schema, refreshing metadata snapshots, or doing follow-up analysis on a previous query.
+description: Queries connections, joins data through DUCKDB, and analyzes uploaded files inside the MarcoPolo remote workspace. Use this skill whenever the user wants analysis, aggregation, filtering, comparison, or follow-up querying on workspace data.
 ---
 
 # Query and analyze data
 
-All work happens in the remote workspace through `workspace_shell`. The
-in-workspace canonical reference is `/workspace/workflows/query-and-analyze-data.md`.
+Use this skill when the work needs query authoring or debugging inside the
+workspace, intermediate materialization, DUCKDB joins, or analysis over files
+that live in the remote workspace.
+
+For live dashboards or generated apps that only need bounded runtime data,
+prefer the MCP `connections_list` and `data_query` tools instead of routing the fetch through `workspace_shell(...)`.
+
+When using MCP `data_query`, treat the result as an envelope object rather than a bare row array. The usual contract is `{ rows: [...] }` plus metadata such as `success`, so callers should unwrap `rows` before iterating or handing results to chart code.
+
+## Preferred surfaces
+
+- run shell commands through `workspace_shell(...)`
+- use the `connection ...` CLI for connection operations
+- use `connection query DUCKDB ...` for joins and in-workspace derived datasets
+- use `using-connection-cli` for detailed `connection` verb or flag reference
 
 ## Query one connection
 
-1. Discover connections and confirm capabilities.
+1. Start with `workspace_shell("connection list --json")`
+2. Choose a connection and confirm the needed verb is listed in its `capabilities`
+3. Read `connections/<name>/README.md`, `connections/<name>/RULES.md`, and `connections/<name>/SYNTAX.md`
+4. If credential behavior is unclear or credentials changed, run `workspace_shell("connection test <name> --json")`
+5. Inspect existing files in `connections/<name>/queries/` and prefer adapting an existing query over starting from scratch
+6. Inspect existing files in `connections/<name>/metadata/` if present
+7. If `describe` is available and metadata snapshots are missing or stale, run `workspace_shell("connection describe <name> --json")`
+8. Read the metadata snapshot files in `connections/<name>/metadata/`
+9. Write or revise a query file in `connections/<name>/queries/` using shell commands in the remote workspace
+10. Run `workspace_shell("connection query <name> --file connections/<name>/queries/<file> --json")`
 
-   ```
-   workspace_shell("connection list --json")
-   ```
+## Query authoring notes
 
-   Pick a connection. Confirm the verb you need is listed in its
-   `capabilities` — never call `browse`/`download`/`upload` unless that
-   verb is advertised.
+- treat `capabilities` as authoritative before using gated verbs
+- prefer `connections/<name>/queries/report.sql` over ad hoc relative paths
+- if an existing query is close, reuse its pattern and copy it to a new file
+  unless you intentionally want to change the existing workflow
+- preserve connection-specific syntax, naming, filters, and join patterns that
+  already work in this workspace
+- rerun `connection describe ...` only when the connection changed, the
+  snapshot looks stale, or a query fails because the structure no longer
+  matches
+- do not run `connection browse`, `download`, or `upload` unless that verb
+  appears in the selected connection's `capabilities`
 
-2. Read the connection's docs.
+## Join across connections with DUCKDB
 
-   ```
-   workspace_shell("cat connections/<name>/README.md connections/<name>/SYNTAX.md connections/<name>/RULES.md")
-   ```
+1. Query each upstream connection first; each result is materialized into
+   DUCKDB as a relation
+2. Use `workspace_shell("connection query DUCKDB --file <query-file> --json")`
+   to join and transform those relations
+3. Use returned `relation_name` values directly in follow-up DUCKDB SQL
+4. Save reusable SQL in `connections/DUCKDB/queries/` or reusable code in
+   `scripts/`
 
-3. If the connection is new or credentials changed, verify them.
+## Work with files in the workspace
 
-   ```
-   workspace_shell("connection test <name> --json")
-   ```
+- user-provided files belong in `data/uploads/`
+- fetched files usually land in `data/downloads/`
+- database files such as SQLite belong in `data/databases/`
 
-4. Look at existing queries and metadata before authoring.
+DuckDB can read files directly from those paths, so file-based analysis usually becomes a DUCKDB query rather than bespoke parsing code.
 
-   ```
-   workspace_shell("ls connections/<name>/queries/ connections/<name>/metadata/")
-   ```
+## Failure routing
 
-   Prefer adapting an existing query file to starting from scratch. Existing
-   queries encode connection-specific syntax, naming, filters, and join
-   patterns that already work in this workspace.
-
-5. Refresh metadata if it's missing or stale and `describe` is in capabilities.
-
-   ```
-   workspace_shell("connection describe <name> --json")
-   ```
-
-   This writes snapshot files into `connections/<name>/metadata/`. Read them
-   before writing the query.
-
-   ```
-   workspace_shell("ls connections/<name>/metadata/ && cat connections/<name>/metadata/<file>")
-   ```
-
-   Rerun `describe` only when the connection changed, the snapshot looks old,
-   or a query fails because the structure no longer matches.
-
-6. Write the query file under `connections/<name>/queries/`. Use a
-   `workspace_shell` heredoc — the built-in Write/Edit tools can't reach
-   the remote workspace and would land the file in the client's
-   environment instead.
-
-   ```
-   workspace_shell("""cat > connections/<name>/queries/<file>.sql <<'SQL'
-   SELECT col FROM tbl WHERE condition
-   SQL""")
-   ```
-
-   If an existing query is close, copy it to a new file rather than mutating
-   the original — unless you intentionally want to change the existing
-   workflow.
-
-7. Execute the query.
-
-   ```
-   workspace_shell("connection query <name> --file connections/<name>/queries/<file>.sql --json")
-   ```
-
-   Path semantics: query file paths are workspace-relative; prefer
-   `connections/<name>/queries/<file>` over `queries/<file>`.
-
-   The response includes `run_id`, `relation_name` (a materialized DuckDB
-   relation), `row_count`, and a `preview` array (default 10 rows; pass
-   `--sample-rows -1` to include all rows in the payload).
-
-## Join across connections through DUCKDB
-
-DUCKDB is the in-workspace analytical connection. Backed by
-`.dv/duckdb/workspace.duckdb`, it appears as a normal connection at
-`connections/DUCKDB/`.
-
-1. Run each upstream `connection query` first. Each materializes a DuckDB
-   relation; note the `relation_name` from each response.
-
-2. Write a DuckDB SQL file that joins or transforms those relations.
-
-   ```
-   workspace_shell("""cat > connections/DUCKDB/queries/<file>.sql <<'SQL'
-   SELECT a.id, b.amount
-     FROM <relation_a> a
-     JOIN <relation_b> b USING (id)
-   SQL""")
-   ```
-
-3. Execute through DUCKDB.
-
-   ```
-   workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
-   ```
-
-Save reusable joins in `connections/DUCKDB/queries/` and reusable Python or
-shell pipelines in `scripts/`.
-
-## Work with files in the remote workspace
-
-- User-provided files belong in `data/uploads/`. The user uploads them
-  into the remote workspace; read them with `workspace_shell` (the
-  built-in tools can't reach them).
-- Files fetched via `connection download` land in `data/downloads/` by
-  default.
-- Use `data/databases/` for database files (SQLite, etc.) when needed.
-
-DuckDB can read CSV/Parquet/JSON files directly, so for ad-hoc analysis on
-an uploaded file:
-
-```
-workspace_shell("""cat > connections/DUCKDB/queries/<file>.sql <<'SQL'
-SELECT * FROM read_csv_auto('data/uploads/<file>.csv') LIMIT 100
-SQL""")
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
-```
-
-## Common pitfalls
-
-- **Wrong shell.** The `connection` CLI only exists inside the remote
-  workspace pod, so the client's built-in shell can't run it — calling
-  `connection ...` through Bash will fail with "command not found".
-  Always use `workspace_shell`.
-- **Capabilities, not assumptions.** Trust `connection list --json` —
-  capabilities vary per connection type and can change as the platform
-  evolves.
-- **One file per query.** `connection query` expects `--file <existing-path>`.
-  Write the file first; don't try to inline SQL.
-- **Workspace-relative paths.** Query file paths in `--file` are
-  workspace-relative; absolute paths under `/workspace` work too, but the
-  relative form is the convention.
-
-## Pointers
-
-- adding a connection or installing a demo → `setup-connection`
-- per-verb flag reference → `using-connection-cli`
-- workspace layout → `using-marcopolo-workspace`
-- visualizing results → `build-dashboard`
-- scheduling a recurring run → `setup-automation`
+- if metadata is missing or stale and `describe` is available, rerun
+  `workspace_shell("connection describe <name> --json")`
+- if a query fails because the structure changed, refresh metadata before
+  rewriting the query
+- if you need `connection` flags or response details, consult
+  `using-connection-cli` instead of guessing
