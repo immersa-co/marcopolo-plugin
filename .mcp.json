@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "marcopolo": {
+    "MarcoPolo": {
       "type": "http",
       "url": "https://mcp.marcopolo.dev"
     }
