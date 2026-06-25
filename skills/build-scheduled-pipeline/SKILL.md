@@ -1,13 +1,13 @@
 ---
 name: build-scheduled-pipeline
-description: Build a Marcopolo scheduled data or AI pipeline that queries governed connections, writes outputs such as DuckDB tables or artifacts, and runs on a schedule. Use when the user asks to automate, schedule, refresh, monitor, or repeatedly run a data workflow.
+description: Build a MarcoPolo scheduled data or AI pipeline that queries governed connections, writes outputs such as DuckDB tables or artifacts, and runs on a schedule. Use when the user asks to automate, schedule, refresh, monitor, or repeatedly run a data workflow.
 ---
 
 # Build Scheduled Pipeline
 
-Create a scheduled Marcopolo data or AI pipeline. The current implementation
+Create a scheduled MarcoPolo data or AI pipeline. The current implementation
 uses workspace scripts plus the `cron` CLI. Do not assume pipeline-specific MCP
-tools until Marcopolo exposes first-class pipeline runtime objects.
+tools until MarcoPolo exposes first-class pipeline runtime objects.
 
 ## Compatibility
 

@@ -145,7 +145,7 @@ Behavior by client:
 - Join across connections through the workspace-local DUCKDB connection.
 - Explore schemas and refresh metadata snapshots before writing queries.
 - Work with cloud storage for connections that advertise those capabilities.
-- Build dashboards and generated apps backed by governed Marcopolo data.
+- Build dashboards and generated apps backed by governed MarcoPolo data.
 - Build scheduled data and AI workflows.
 - Manage recurring workspace jobs through cron.
 - Install demo connections.
