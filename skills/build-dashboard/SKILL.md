@@ -1,146 +1,129 @@
 ---
 name: build-dashboard
-description: Authors dashboard artifacts in the MarcoPolo workspace — a `.dashboard` manifest plus a `view.tsx` React component, previewed via the `preview_dashboard` MCP tool. Use this skill whenever the user wants any durable visual output — charts, dashboards, plots, graphs, visualizations, reports — even if they say "just show me a chart" or "plot this" without using the word "dashboard". Also use when iterating on the look of an existing dashboard or wiring up a new dataset.
+description: Build a dashboard from governed Marcopolo data. Use when the user asks for a dashboard, visualization, live artifact, remote artifact, explorable report, or runnable dashboard app backed by Marcopolo connections.
 ---
 
-# Build a dashboard
+# Build Dashboard
 
-A dashboard is the right surface when the user wants a durable visual
-artifact they can refine during design and view again later. The
-in-workspace canonical reference is `/workspace/workflows/build-dashboard.md`.
+Build a dashboard that gets data through Marcopolo MCP tools. Support both:
 
-## Authoring contract
+- Cowork: prefer a Remote Artifact that calls the Marcopolo MCP connection.
+- Non-Cowork: generate runnable code that calls the same MCP tools through the
+  host or server runtime using a Marcopolo developer API token.
 
-A dashboard is two files under `artifacts/dashboards/`:
+## Compatibility
 
-- `<name>.dashboard` — a JSON manifest declaring metadata and named DuckDB
-  datasets
-- `view.tsx` (or `shared/view.tsx`) — a React component that renders the data
+Prefer product MCP data tools when the current session exposes them:
 
-The split exists for a reason: the manifest is the trusted authoring surface
-and the only thing `preview_dashboard` looks at. MarcoPolo resolves the
-manifest's `datasets` against DuckDB and passes the results in as the `data`
-prop on the React component. That separation keeps `view.tsx` pure
-presentation, makes the data dependencies inspectable, and lets the same
-view re-render against fresh data without code changes.
+- `connections_list`
+- `data_query`
 
-Practical implications:
+Older agent sessions may expose only `workspace_shell`. In those sessions, use
+the compatibility path for agent-side work:
 
-- The manifest has the `.dashboard` extension. Other extensions are not
-  picked up by `preview_dashboard`.
-- The manifest points at a relative React view file (commonly `view.tsx`
-  next to it).
-- Datasets are declared in the manifest. Don't fetch or query inside
-  `view.tsx` — there's no assistant or workspace context at render time.
-- `view.tsx` exports a default React component that takes `{ data,
-  metadata }`.
-- Use only `react` and `recharts` imports unless the workspace's `RULES.md`
-  explicitly allows others — other libraries may not be available in the
-  preview environment.
-- Preview and share through the manifest, not through `view.tsx` directly.
+- `workspace_shell("connection list --json")`
+- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
+- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
 
-## Templates
+Treat shell query results as CLI envelopes, not `data_query` payloads.
+Normalize them before reasoning over rows:
 
-Two starter files live alongside this skill:
+- rows from `data`, otherwise `preview`
+- `row_count` from `row_count`, otherwise `len(rows)`
+- `run_id` if present
+- `relation_name` if present
 
-- `assets/dashboard.template.json` — the `.dashboard` manifest shape
-- `assets/view.template.tsx` — a minimal React view component using
-  `recharts`
+Do not teach generated dashboards, Remote Artifacts, or external app code to
+call `workspace_shell`. When the product surface exposes `data_query`, runtime
+dashboard data access should target `data_query`.
 
-Read them when authoring and adapt rather than reinvent.
+## Inputs
 
-## Authoring workflow
+Get the minimum missing details:
 
-1. **Make the data queryable through DUCKDB first.**
-   Dashboards resolve datasets against DuckDB, so the manifest's `query`
-   field has to run cleanly there. For results from upstream connections,
-   run `connection query <name> --file ...` first — each materializes a
-   DuckDB relation you can then reference in the manifest. See
-   `query-and-analyze` for the full flow.
+- Goal and audience.
+- Connection or data domain.
+- Metrics, filters, time range, and row limits.
+- Output target: Cowork Remote Artifact or runnable code.
+- Freshness: live query, reusable query file, or materialized result.
 
-2. **Create `artifacts/dashboards/` and write the manifest.**
+Do not ask for raw datasource credentials in chat. If connection access is
+missing, hand off to the connection setup or sharing flow. For non-Cowork
+runnable code, use a Marcopolo developer API token supplied by the user's host
+or runtime environment, not an endpoint or token entered into the dashboard UI.
 
-   ```
-   workspace_shell("mkdir -p artifacts/dashboards")
-   workspace_shell("""cat > artifacts/dashboards/<name>.dashboard <<'JSON'
-   {
-     "version": 1,
-     "name": "<name>",
-     "title": "<Title>",
-     "view": "view.tsx",
-     "datasets": {
-       "<dataset_key>": {
-         "source": "duckdb",
-         "query": "<sql>"
-       }
-     }
-   }
-   JSON""")
-   ```
+## Data Contract
 
-3. **Write `view.tsx` next to the manifest.**
+Use:
 
-   ```
-   workspace_shell("""cat > artifacts/dashboards/view.tsx <<'TSX'
-   import React from "react";
-   import { ... } from "recharts";
+- `connections_list` to discover visible connections.
+- `data_query` to fetch bounded dashboard data.
 
-   export default function Dashboard({ data, metadata }) {
-     return (...);
-   }
-   TSX""")
-   ```
+`data_query` requires exactly one query source:
 
-   Reference dataset keys you declared in the manifest (e.g.,
-   `data.<dataset_key>`). Every key the view reads from `data` must appear
-   in the manifest's `datasets`.
+- `query`: inline query text. Prefer this for generated apps and short artifact
+  bindings.
+- `query_file`: workspace-relative query file path. Use this when a reusable
+  query already exists or the LLM intentionally authored one.
 
-4. **Preview through the MCP tool.**
+Always include `connection_name`, `max_rows`, and optional `params`.
 
-   ```
-   preview_dashboard(path="artifacts/dashboards/<name>.dashboard")
-   ```
+## Workflow
 
-   This opens the interactive preview UI, resolves manifest datasets
-   through DuckDB, and renders `view.tsx` with the results.
+1. Discover visible connections with `connections_list` when available. If the
+   tool is unavailable in the current session, use the compatibility fallback
+   `workspace_shell("connection list --json")`.
+2. Pick bounded datasets: prefer aggregates, explicit filters, and `LIMIT`.
+3. Use inline `query` unless a reusable workspace query file is clearly useful.
+4. Build the dashboard with loading, empty, permission-error, and query-error
+   states.
+5. Keep raw datasource credentials out of the artifact or code.
+6. Verify each `data_query` call returns the expected columns and row counts.
+7. If the session lacks `data_query`, use bounded `workspace_shell("connection query ... --json")`
+   probes for agent-side validation only. Do not convert that shell path into
+   the runtime contract for generated artifacts.
 
-5. **Iterate the same artifact.**
-   Edit the existing `view.tsx` rather than creating variants — the user
-   wants one durable dashboard, not many. Update the manifest when the
-   dashboard's data needs change. If the user explicitly asks for
-   alternatives (e.g., "show me a line chart version"), then create a
-   second manifest.
+Use `workspace_shell` only for workspace authoring or debugging, such as
+creating a query file, probing query behavior, using DuckDB, or inspecting
+metadata when needed. Do not make the runtime dashboard fetch data through
+`workspace_shell`.
 
-## Design guidance
+## Output Guidance
 
-- **Move data shaping upstream.** SQL in the manifest, saved DUCKDB
-  queries under `connections/DUCKDB/queries/`, or scripts under `scripts/`
-  are all easier to reason about, test, and reuse than logic inside
-  `view.tsx`. Reach for the view only for layout and presentation.
-- **Recurring refresh logic doesn't belong here.** A dashboard renders
-  whatever data exists when you preview it. To keep the data fresh on a
-  schedule, see `setup-automation` — it runs the upstream queries in the
-  background.
-- **Read the workspace's top-level `RULES.md`** before authoring. It may
-  define visual conventions, allowed libraries, or naming rules for
-  artifacts that override the defaults here.
+For Cowork, produce the Remote Artifact shape or instructions the host expects,
+with dataset bindings that call:
 
-## Common pitfalls
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "data_query",
+    "arguments": {
+      "connection_name": "SALES",
+      "query": "select week, sum(revenue) as revenue from revenue group by week order by week limit 12",
+      "max_rows": 500
+    }
+  }
+}
+```
 
-- **Querying inside the component.** The view receives data via the
-  `data` prop. There's no assistant, no `connection`, no DuckDB at render
-  time — only what the manifest resolved.
-- **Mismatched dataset keys.** If `view.tsx` reads `data.foo` but the
-  manifest declares `bar`, the view sees `undefined`. Keys must match.
-- **Wrong manifest extension.** `preview_dashboard` only matches files
-  ending in `.dashboard`.
-- **Importing beyond `react` and `recharts`.** The preview environment
-  may not have your library. Stick to those two unless `RULES.md` says
-  otherwise.
+For non-Cowork, generate runnable code for the user's chosen host, framework,
+or local environment. The generated app should behave like a remote artifact:
 
-## Pointers
+- Browser UI calls only the app's own routes or server functions.
+- Server-side or host code calls the Marcopolo MCP server using JSON-RPC
+  `tools/call` with `name: "data_query"`.
+- Read the MCP server URL and Marcopolo developer API token from environment or
+  host context, such as `MARCOPOLO_MCP_URL` and `MARCOPOLO_API_TOKEN`.
+- Send the token as `Authorization: Bearer <token>` from server-side or host
+  code only.
+- Do not add endpoint fields, token fields, or alternate transport choices to
+  the dashboard UI.
+- Do not create a browser-only live dashboard unless the target host explicitly
+  provides a safe server-side MCP calling bridge.
 
-- producing the upstream DuckDB relations → `query-and-analyze`
-- per-verb flag reference → `using-connection-cli`
-- scheduling a recurring refresh of the underlying data → `setup-automation`
-- workspace layout (where `artifacts/dashboards/` sits) → `using-marcopolo-workspace`
+The developer token is the current non-Cowork auth model. Keep it out of client
+bundles and logs, and fail with a clear configuration error when it is missing.
+
+In the final response, include the output location, data sources, `data_query`
+bindings, freshness model, and validation result.
