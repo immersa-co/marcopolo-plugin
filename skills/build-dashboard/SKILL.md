@@ -1,15 +1,15 @@
 ---
 name: build-dashboard
-description: Build a dashboard from governed Marcopolo data. Use when the user asks for a dashboard, visualization, live artifact, remote artifact, explorable report, or runnable dashboard app backed by Marcopolo connections.
+description: Build a dashboard from governed MarcoPolo data. Use when the user asks for a dashboard, visualization, live artifact, remote artifact, explorable report, or runnable dashboard app backed by MarcoPolo connections.
 ---
 
 # Build Dashboard
 
-Build a dashboard that gets data through Marcopolo MCP tools. Support both:
+Build a dashboard that gets data through MarcoPolo MCP tools. Support both:
 
-- Cowork: prefer a Remote Artifact that calls the Marcopolo MCP connection.
+- Cowork: prefer a Remote Artifact that calls the MarcoPolo MCP connection.
 - Non-Cowork: generate runnable code that calls the same MCP tools through the
-  host or server runtime using a Marcopolo developer API token.
+  host or server runtime using a MarcoPolo developer API token.
 
 ## Compatibility
 
@@ -49,7 +49,7 @@ Get the minimum missing details:
 
 Do not ask for raw datasource credentials in chat. If connection access is
 missing, hand off to the connection setup or sharing flow. For non-Cowork
-runnable code, use a Marcopolo developer API token supplied by the user's host
+runnable code, use a MarcoPolo developer API token supplied by the user's host
 or runtime environment, not an endpoint or token entered into the dashboard UI.
 
 ## Data Contract
@@ -111,9 +111,9 @@ For non-Cowork, generate runnable code for the user's chosen host, framework,
 or local environment. The generated app should behave like a remote artifact:
 
 - Browser UI calls only the app's own routes or server functions.
-- Server-side or host code calls the Marcopolo MCP server using JSON-RPC
+- Server-side or host code calls the MarcoPolo MCP server using JSON-RPC
   `tools/call` with `name: "data_query"`.
-- Read the MCP server URL and Marcopolo developer API token from environment or
+- Read the MCP server URL and MarcoPolo developer API token from environment or
   host context, such as `MARCOPOLO_MCP_URL` and `MARCOPOLO_API_TOKEN`.
 - Send the token as `Authorization: Bearer <token>` from server-side or host
   code only.
