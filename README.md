@@ -1,6 +1,10 @@
 # MarcoPolo Plugin for Claude and Codex
 
-The MarcoPolo plugin connects Claude and Codex to a secure, persistent remote workspace for working with your company's data — querying connections, joining results across sources, building dashboards, and scheduling automations. It bundles the MarcoPolo MCP server plus shared skills that solve three problems with raw MCP connections: operating on the wrong workspace, unreliable multi-step query workflows, and tool discovery failures as MCP servers proliferate. See the [plugin documentation](https://docs.marcopolo.dev/getting-started) for details.
+The MarcoPolo plugin connects Claude and Codex to a secure, persistent remote
+workspace for working with company data, querying connections, joining results
+across sources, building dashboards, and running scheduled workflows. It
+bundles the MarcoPolo MCP server plus shared skills that keep workspace-first
+data work consistent across clients.
 
 ## Installation
 
@@ -12,21 +16,35 @@ The MarcoPolo plugin connects Claude and Codex to a secure, persistent remote wo
 git clone https://github.com/immersa-co/marcopolo-plugin.git
 ```
 
-Start Claude Code in the plugin directory or a parent directory. It detects the plugin automatically.
+Start Claude Code in the plugin directory or a parent directory. It detects the
+plugin automatically.
 
 #### Claude Desktop / Claude.ai
 
-Plugins require admin privileges. Add this repo to your organization's private plugin marketplace, or download as a zip and upload through Plugins (Preview) settings.
+Plugins require admin privileges. Add this repo to your organization's private
+plugin marketplace, or download as a zip and upload through Plugins (Preview)
+settings.
 
 #### Verify
 
-Run `/skills` in Claude Code. You should see `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, and `setup-automation`.
+Run `/skills` in Claude Code. You should see:
+
+- `using-marcopolo-workspace`
+- `using-connection-cli`
+- `setup-connection`
+- `query-and-analyze`
+- `build-dashboard`
+- `build-scheduled-pipeline`
+- `setup-automation`
 
 ### Codex
 
-Codex uses `.codex-plugin/plugin.json` and reuses the same `skills/` and `.mcp.json` files as Claude. The `agents/` directory remains Claude-specific; Codex gets its behavior from the bundled skills and plugin manifest metadata.
+Codex uses `.codex-plugin/plugin.json` and reuses the same `skills/` and
+`.mcp.json` files as Claude. The `agents/` directory remains Claude-specific;
+Codex gets its behavior from the bundled skills and plugin manifest metadata.
 
-For Codex, the recommended setup is a personal install so the plugin is available across projects.
+For Codex, the recommended setup is a personal install so the plugin is
+available across projects.
 
 ```bash
 mkdir -p ~/.codex/plugins
@@ -63,7 +81,8 @@ Then:
 1. Restart Codex.
 2. Open the plugin directory in Codex.
 3. Select your personal marketplace.
-4. Verify `marcopolo` appears installed by default or install it manually if your local policy differs.
+4. Verify `marcopolo` appears installed by default or install it manually if
+   your local policy differs.
 
 #### Verify
 
@@ -74,13 +93,37 @@ After installation, confirm the plugin exposes:
 - `setup-connection`
 - `query-and-analyze`
 - `build-dashboard`
+- `build-scheduled-pipeline`
 - `setup-automation`
 
-Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a Codex session in this repo.
+Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a
+Codex session in this repo.
+
+## Session compatibility
+
+Newer MarcoPolo sessions may expose the preferred product data tools:
+
+- `connections_list`
+- `data_query`
+
+Older sessions may expose only `workspace_shell`. Core querying still works in
+those sessions through the compatibility path:
+
+- `workspace_shell("connection list --json")`
+- bounded `workspace_shell("connection query ... --json")`
+
+The plugin skills and workspace guides are written to prefer the product data
+tools when available and fall back to `workspace_shell` when they are not.
+
+Generated dashboards, Remote Artifacts, and external app code should prefer
+`data_query` when the product surface exposes it. `workspace_shell` is the
+agent-session fallback, not the runtime contract for generated artifacts.
 
 ## How to use it
 
-Once the plugin is installed, use your client normally. The plugin adds the MarcoPolo MCP server plus the shared skills, so you can ask for data work in natural language without manually wiring tools together.
+Once the plugin is installed, use your client normally. The plugin adds the
+MarcoPolo MCP server plus shared skills, so you can ask for data work in
+natural language without manually wiring tools together.
 
 Good first prompts:
 
@@ -88,23 +131,24 @@ Good first prompts:
 - `Install a demo connection so I can try MarcoPolo without my own credentials.`
 - `Inspect the schema for the orders table before writing any SQL.`
 - `Query monthly revenue for the last 12 months and build a dashboard from the result.`
-- `Browse our storage connection, find the latest CSV export, and summarize what is in it.`
-- `Schedule a recurring job that refreshes this report every weekday morning.`
+- `Build a scheduled pipeline that refreshes this report every weekday morning.`
 
 Behavior by client:
 
-- **Claude** uses the bundled skills and the `marcopolo` agent in this repo.
-- **Codex** uses the shared skills from `skills/` and the MCP server from `.mcp.json`; it does not use the Claude-specific `agents/` directory.
+- Claude uses the bundled skills and the `marcopolo` agent in this repo.
+- Codex uses the shared skills from `skills/` and the MCP server from
+  `.mcp.json`; it does not use the Claude-specific `agents/` directory.
 
 ## What you can do
 
-- **Query any connection** - Ask questions in natural language. The assistant writes query files in the workspace and executes them through the `connection` CLI; results are materialized into DuckDB for follow-up analysis.
-- **Join across connections** - Combine results from Snowflake, Salesforce, BigQuery, Postgres, and more through the workspace-local DUCKDB connection.
-- **Explore schemas** - The assistant refreshes metadata snapshots into `connections/<name>/metadata/` and reads them before writing queries.
-- **Work with cloud storage** - Browse, download, and upload files for connections that advertise those capabilities (S3, Azure Blob, Google Drive).
-- **Build dashboards** - Author `.dashboard` manifests plus `view.tsx` components and preview them interactively.
-- **Schedule recurring jobs** - Use the workspace `cron` CLI for managed recurring queries, refreshes, and pipelines.
-- **Install demo connections** - Try MarcoPolo with hosted demo data, no credentials needed.
+- Query any connection.
+- Join across connections through the workspace-local DUCKDB connection.
+- Explore schemas and refresh metadata snapshots before writing queries.
+- Work with cloud storage for connections that advertise those capabilities.
+- Build dashboards and generated apps backed by governed Marcopolo data.
+- Build scheduled data and AI workflows.
+- Manage recurring workspace jobs through cron.
+- Install demo connections.
 
 ## Plugin contents
 
@@ -114,16 +158,19 @@ Behavior by client:
 | **Claude plugin** | `.claude-plugin/plugin.json` |
 | **Codex plugin** | `.codex-plugin/plugin.json` |
 | **Agent** | `marcopolo` - data analyst with workspace-first defaults (Claude only) |
-| **Skills** | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, `setup-automation` |
+| **Skills** | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, `build-scheduled-pipeline`, `setup-automation` |
 
-## MCP tools
+## In-workspace guidance
 
-The plugin exposes four MCP tools. Almost everything else happens inside the workspace through the `connection` and `cron` CLIs invoked via `workspace_shell`.
+Once a session is running, the workspace's own guidance files are the canonical
+instructions for day-to-day operation:
 
-- `workspace_shell(command, timeout=30)` - run any command in the remote workspace
-- `connection_setup(type, intent_text=None)` - generate a browser URL for credentialed connection setup
-- `install_demo_connection(demo_connection, display_name=None, intent_text=None)` - install a hosted demo connection
-- `preview_dashboard(path)` - open the interactive preview UI for a `.dashboard` manifest
+- `/workspace/README.md`
+- `/workspace/RULES.md`
+- `/workspace/workflows/README.md`
+
+Those files define the preferred tool path, workspace conventions, and the
+compatibility fallback for older sessions.
 
 ## Documentation
 

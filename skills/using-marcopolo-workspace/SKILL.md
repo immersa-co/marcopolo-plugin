@@ -1,75 +1,107 @@
 ---
 name: using-marcopolo-workspace
-description: Orientation for the MarcoPolo remote workspace — what it is, how `/workspace` is laid out, why `workspace_shell` is the only tool that can reach it (built-in tools cannot), and how the `connection`/`cron` CLIs fit in. Use this skill whenever MarcoPolo, the marcopolo MCP server, the `workspace_shell` tool, the `/workspace` directory, connections, or `connection`/`cron` CLI commands come up — including when the user says "use Marcopolo" without specifying what to do, or when any marcopolo MCP tool is invoked even incidentally. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
+description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` and `cron` CLIs fit in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` and `cron` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
 ---
 
 # Using the MarcoPolo workspace
 
 MarcoPolo is a persistent remote Linux workspace at `/workspace` for working
-with company data — querying connections, building dashboards, scheduling
-jobs, and keeping a durable collection of queries, scripts, and artifacts.
+with company data, building dashboards, scheduling jobs, and keeping a durable
+collection of queries, scripts, and artifacts.
 
-The workspace is the surface. Almost everything happens there.
+## Two execution surfaces
+
+Two execution surfaces coexist in a MarcoPolo session:
+
+- Product MCP data tools for governed data reads:
+  - `connections_list`
+  - `data_query`
+- `workspace_shell` for workspace files, scripts, git, DuckDB, query authoring,
+  and cron operations inside `/workspace`
+
+Use the product data tools for simple governed data reads when the current
+session exposes them. Use `workspace_shell` for normal file and process work in
+the workspace.
+
+## Compatibility
+
+Older agent sessions may expose only `workspace_shell`. In those sessions, use
+the compatibility path for agent-side work:
+
+- `workspace_shell("connection list --json")`
+- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
+- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
+
+Treat shell query results as CLI envelopes rather than `data_query` payloads.
+Normalize them before reasoning over rows:
+
+- rows from `data`, otherwise `preview`
+- `row_count` from `row_count`, otherwise `len(rows)`
+- `run_id` if present
+- `relation_name` if present
+
+Generated dashboards, Remote Artifacts, and external app code should prefer
+`data_query` when the product surface exposes it. Do not teach generated code
+to call `workspace_shell`.
 
 ## Two shell environments
 
 Two shell environments coexist in this session:
 
-- **Your built-in tools** — the shell and filesystem tools your client
-  provides (Bash, Read, Write, Edit, Glob, Grep, etc., depending on the
-  client). These act on the client's own environment.
-- **`workspace_shell`** — the MCP tool that runs commands inside the
-  MarcoPolo remote workspace at `/workspace`.
+- Your built-in shell and filesystem tools act on the client's own environment.
+- `workspace_shell` runs commands inside the MarcoPolo remote workspace at
+  `/workspace`.
 
-Your built-in tools cannot reach the MarcoPolo workspace. They can't
-read or create files there, run the `connection` or `cron` CLIs that
-only exist there, or see git state inside it. Only `workspace_shell`
-can.
+Your built-in tools cannot reach the MarcoPolo workspace. They cannot read or
+create files there, run the `connection` or `cron` CLIs that only exist there,
+or see git state inside it. Only `workspace_shell` can.
 
-So for all MarcoPolo work — reading files, writing queries, running
-scripts, inspecting git — use `workspace_shell`. Reach for your built-in
-tools only for things outside MarcoPolo (the client's own configuration,
-a repo on the user's machine, files they explicitly point at there).
+So for all MarcoPolo workspace work, such as reading files, writing queries,
+running scripts, or inspecting git, use `workspace_shell`. Reach for your
+built-in tools only for things outside MarcoPolo.
 
-User-uploaded files land in `data/uploads/` *inside the MarcoPolo
-workspace* — `workspace_shell` reads them, not the built-in tools.
+User-uploaded files land in `data/uploads/` inside the MarcoPolo workspace.
+`workspace_shell` reads them, not the built-in tools.
 
 ## Common `workspace_shell` operations
 
 Treat `/workspace` like a checked-out repo. Common shapes:
 
 - read files: `workspace_shell("cat /workspace/RULES.md")`
-- list and search: `workspace_shell("ls connections/")`, `workspace_shell("rg <pattern> connections/")`
-- write and edit files: `workspace_shell` with heredocs, `sed`, or other shell tools
+- list and search: `workspace_shell("ls connections/")`,
+  `workspace_shell("rg <pattern> connections/")`
+- write and edit files: `workspace_shell` with heredocs, `sed`, or other shell
+  tools
 - run scripts: `workspace_shell("python scripts/<file>.py")`
-- inspect git state: `workspace_shell("git status")`, `workspace_shell("git diff")`
+- inspect git state: `workspace_shell("git status")`,
+  `workspace_shell("git diff")`
 
-Read `RULES.md` and the relevant `workflows/` guide before authoring; use
-git as part of normal work.
+Read `RULES.md` and the relevant `workflows/` guide before authoring; use git
+as part of normal work.
 
-## The four MCP tools
+## MCP tool families
 
-- `workspace_shell(command, timeout=30)` — run any command in the remote
-  workspace. This is how you read files, write queries, run scripts, drive the
-  `connection` and `cron` CLIs, and inspect git state.
-- `connection_setup(type, intent_text=None)` — generate a browser URL the user
-  opens to configure a credentialed connection. Returns canonical type
-  resolution and a setup workflow.
+Product data tools:
+
+- `connections_list` for connection discovery when available
+- `data_query` for bounded governed query execution when available
+
+Workspace and ext-app tools:
+
+- `workspace_shell(command, timeout=30)` for remote workspace commands
+- `connection_setup(type, intent_text=None)` for credentialed connection setup
 - `install_demo_connection(demo_connection, display_name=None, intent_text=None)`
-  — install a hosted demo connection directly. No browser flow.
-- `preview_dashboard(path)` — open the interactive preview UI for a workspace
-  `.dashboard` manifest.
+  for hosted demo connections
 
-Everything else — listing connections, testing credentials, describing
-metadata, querying, browsing storage, scheduling jobs — runs inside the
-workspace through `workspace_shell` and the in-pod `connection` and `cron`
-CLIs.
+Some sessions may also expose legacy or host-specific tools. Do not rely on
+them as the primary dashboard or query path unless a more specific skill tells
+you to.
 
-## The `connection` CLI is the verb surface
+## The `connection` CLI is the workspace verb surface
 
 For full reference see the `using-connection-cli` skill. The shape:
 
-```
+```text
 connection <verb> [args] --json
 ```
 
@@ -77,12 +109,12 @@ Common verbs: `list`, `add`, `test`, `describe`, `query`, `browse`, `download`,
 `upload`. Always pass `--json` so output is structured.
 
 `connection list --json` returns each connection's `capabilities` array. That
-list is **authoritative** — never call `browse`, `download`, or `upload` on a
+list is authoritative. Never call `browse`, `download`, or `upload` on a
 connection unless that verb appears in its capabilities.
 
 ## Workspace layout
 
-```
+```text
 /workspace/
   README.md                       workspace overview
   RULES.md                        workspace-wide rules and conventions
@@ -94,23 +126,22 @@ connection unless that verb appears in its capabilities.
     setup-automation.md
   connections/                    one subdirectory per visible connection
     <name>/
-      README.md                   connection summary + authoritative capabilities
-      RULES.md                    runtime-managed working guidance
-      SYNTAX.md                   query syntax reference
-      queries/                    saved query files (workspace-relative paths)
-      metadata/                   snapshots written by `connection describe`
-      profile/                    profiling snapshots
-      scratch/                    temporary work
-    DUCKDB/                       in-workspace analytical connection
-  scripts/                        reusable programs (Python, shell, Node)
-  artifacts/                      user-facing outputs
-    dashboards/                   .dashboard manifests + view.tsx files
+      README.md
+      RULES.md
+      SYNTAX.md
+      queries/
+      metadata/
+      profile/
+      scratch/
+    DUCKDB/
+  scripts/
+  artifacts/
   data/
-    uploads/                      user-provided files
-    downloads/                    files fetched via `connection download`
-    databases/                    database files (SQLite, etc.)
-  schedules/                      cron job definitions
-  .dv/                            runtime-managed state (DuckDB, etc.)
+    uploads/
+    downloads/
+    databases/
+  schedules/
+  .dv/
 ```
 
 Always read first before authoring:
@@ -122,10 +153,9 @@ Always read first before authoring:
 ## DUCKDB is a connection
 
 DUCKDB is the in-workspace analytical connection, backed by
-`.dv/duckdb/workspace.duckdb`. It is not a separate tool — query it the same
-way as any other connection:
+`.dv/duckdb/workspace.duckdb`. Query it through the `connection` CLI:
 
-```
+```text
 workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
 ```
 
@@ -134,22 +164,22 @@ derived datasets.
 
 ## Where to put things
 
-- query files → `connections/<name>/queries/`
-- metadata snapshots → `connections/<name>/metadata/` (written by `connection describe`)
-- reusable programs → `scripts/`
-- user-facing outputs → `artifacts/`
-- dashboards → `artifacts/dashboards/<name>.dashboard` + `view.tsx`
-- schedule definitions → `schedules/`
-- user-provided data → `data/uploads/`
-- fetched data → `data/downloads/` (from `connection download`)
-- database files (SQLite, etc.) → `data/databases/`
+- query files -> `connections/<name>/queries/`
+- metadata snapshots -> `connections/<name>/metadata/`
+- reusable programs -> `scripts/`
+- user-facing outputs -> `artifacts/`
+- schedule definitions -> `schedules/`
+- user-provided data -> `data/uploads/`
+- fetched data -> `data/downloads/`
+- database files -> `data/databases/`
 
-Don't write to `.dv/` — it is runtime-managed.
+Do not write to `.dv/`; it is runtime-managed.
 
 ## Pointers
 
-- adding a connection, installing a demo, fixing credentials → `setup-connection`
-- querying data, exploring schemas, joining sources → `query-and-analyze`
-- building a chart or dashboard → `build-dashboard`
-- scheduling recurring jobs or refreshes → `setup-automation`
-- looking up a `connection` CLI verb or flag → `using-connection-cli`
+- adding a connection, installing a demo, fixing credentials -> `setup-connection`
+- querying data, exploring schemas, joining sources -> `query-and-analyze`
+- building a chart or dashboard -> `build-dashboard`
+- building a scheduled data or AI workflow -> `build-scheduled-pipeline`
+- managing an existing recurring job -> `setup-automation`
+- looking up a `connection` CLI verb or flag -> `using-connection-cli`
