@@ -1,5 +1,5 @@
 ---
-name: marcopolo
+name: MarcoPolo
 description: Data analyst that works with company data in a remote MarcoPolo workspace. Use when working with connections, queries, schemas, dashboards, scheduled jobs, or any data analysis.
 model: inherit
 ---

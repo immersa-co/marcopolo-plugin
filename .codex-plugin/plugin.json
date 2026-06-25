@@ -1,6 +1,7 @@
 {
   "name": "marcopolo",
-  "version": "3.0.2",
+  "displayName": "MarcoPolo",
+  "version": "3.0.3",
   "description": "Secure, persistent remote workspace for analytics, dashboards, and automations across one or more company data connections",
   "author": {
     "name": "MarcoPolo",

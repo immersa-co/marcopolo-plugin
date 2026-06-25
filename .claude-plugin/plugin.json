@@ -1,6 +1,7 @@
 {
   "name": "marcopolo",
-  "version": "3.0.2",
+  "displayName": "MarcoPolo",
+  "version": "3.0.3",
   "description": "Secure, persistent remote workspace for analytics, dashboards, and automations across one or more company data connections",
   "author": {
     "name": "MarcoPolo",
@@ -11,5 +12,15 @@
   "license": "Apache-2.0",
   "keywords": ["data", "analytics", "mcp", "sql", "workspace"],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "MarcoPolo",
+    "shortDescription": "Claude access to MarcoPolo data workflows",
+    "longDescription": "Query connections, build dashboards, and schedule automations inside a secure persistent MarcoPolo remote workspace using shared skills and MCP configuration.",
+    "developerName": "MarcoPolo",
+    "category": "Productivity",
+    "brandColor": "#4b1635",
+    "composerIcon": "./assets/mp-symbol.png",
+    "logo": "./assets/mp-symbol.png"
+  }
 }
