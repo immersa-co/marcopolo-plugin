@@ -20,7 +20,6 @@ Older agent sessions may expose only `workspace_shell`. In those sessions, use
 the compatibility path for agent-side discovery and bounded query validation:
 
 - `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
 - `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
 
 Treat shell query results as CLI envelopes rather than `data_query` payloads.
@@ -76,7 +75,8 @@ setup flows when data access is missing.
 4. Dry-run the pipeline.
    - Execute the script through `workspace_shell`.
    - Verify row counts, output paths, and failure handling.
-   - Use bounded `data_query` or bounded `workspace_shell("connection query ... --json")`
+   - Use bounded `data_query` or bounded
+     `workspace_shell("connection query <name> --file <workspace-relative-query-file> --json")`
      probes to validate source queries before scheduling.
    - Fix connection, SQL, Python, or DuckDB issues before scheduling.
 
