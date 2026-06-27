@@ -16,14 +16,14 @@ Prefer product MCP data tools when the current session exposes them:
 - `connections_list`
 - `data_query`
 
-Use those tools for simple governed reads that do not need workspace-local query
-files, DuckDB shaping, or script authoring.
+Use those tools for simple governed reads that do not need DuckDB shaping or
+script authoring. `data_query` now requires a workspace query file rather than
+inline query text.
 
 Older agent sessions may expose only `workspace_shell`. In those sessions, use
 the compatibility path:
 
 - `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
 - `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
 
 Treat shell query results as CLI envelopes rather than `data_query` payloads.
@@ -75,9 +75,9 @@ compatibility fallback for agent-side work.
    workspace_shell("connection describe <name> --json")
    ```
 
-6. For simple governed reads, prefer `data_query` when available. For
-   workspace-local authoring, write the query file under
-   `connections/<name>/queries/`.
+6. Author or reuse a query file under `connections/<name>/queries/`. Prefer a
+   business-readable filename and the extension appropriate for the
+   connection's query language.
 
    ```text
    workspace_shell("""cat > connections/<name>/queries/<file>.sql <<'SQL'
@@ -86,16 +86,20 @@ compatibility fallback for agent-side work.
    ```
 
 7. Execute the query through the product tool when available and the workflow
-   only needs bounded data. Otherwise use the workspace path:
+   only needs bounded data:
+
+   ```json
+   {
+     "connection_name": "<name>",
+     "query_file": "connections/<name>/queries/<file>.sql",
+     "max_rows": 500
+   }
+   ```
+
+   Otherwise use the workspace path:
 
    ```text
    workspace_shell("connection query <name> --file connections/<name>/queries/<file>.sql --sample-rows 500 --json")
-   ```
-
-   For inline compatibility probes:
-
-   ```text
-   workspace_shell("connection query <name> --inline '<sql>' --sample-rows 500 --json")
    ```
 
 ## Join across connections through DUCKDB
@@ -134,6 +138,7 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file
   built-in shell cannot run it. Always use `workspace_shell` for workspace
   commands.
 - Trust `connection list --json` or `connections_list` for capabilities.
+- Query through named files, not inline SQL or inline JSON query bodies.
 - Keep compatibility queries bounded with `--sample-rows <n>`.
 - Query file paths in `--file` are workspace-relative.
 
