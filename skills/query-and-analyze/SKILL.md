@@ -5,117 +5,161 @@ description: Queries connections, joins results across sources through DuckDB, a
 
 # Query and analyze data
 
-Use this skill for workspace-side query authoring, debugging, materialization,
-DuckDB joins, and file analysis. The in-workspace canonical reference is
-`/workspace/workflows/query-and-analyze-data.md`.
+Use this skill for all agent-side analytics: query authoring, schema exploration,
+DuckDB materialization, joins across sources, and file analysis.
 
-## Compatibility
+**Tool selection:**
+- `workspace_shell("connection query ...")` is the correct tool for all agent
+  analytics. The full result is always materialized into DuckDB; `--sample-rows`
+  only controls how many rows come into the agent's context window.
+- `data_query` is for generated code that re-queries live data at view or load
+  time: Remote Artifacts, external web apps, scheduled scripts. Do not use it
+  for agent analytics or one-off snapshot visualizations — embed those inline.
 
-Prefer product MCP data tools when the current session exposes them:
+**Session compatibility:** Some sessions (e.g. ChatGPT) expose only
+`workspace_shell` and do not have `connections_list` or `data_query`. Check
+which tools are available before deciding on a path. `workspace_shell` works
+in every session and is the primary analytics tool in all cases.
 
-- `connections_list`
-- `data_query`
+## Required workflow — follow every step
 
-Use those tools for simple governed reads that do not need DuckDB shaping or
-script authoring. `data_query` now requires a workspace query file rather than
-inline query text.
+### Step 1 — Orient in the workspace
 
-Older agent sessions may expose only `workspace_shell`. In those sessions, use
-the compatibility path:
+```text
+workspace_shell("cat /workspace/RULES.md")
+```
 
-- `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
+This is the workspace's long-term memory. Read it before touching any connection.
 
-Treat shell query results as CLI envelopes rather than `data_query` payloads.
-Normalize them before reasoning over rows:
+### Step 2 — Discover connections
 
-- rows from `data`, otherwise `preview`
-- `row_count` from `row_count`, otherwise `len(rows)`
-- `run_id` if present
-- `relation_name` if present
+Use `connections_list` if the current session exposes it. Otherwise:
 
-Generated dashboards, Remote Artifacts, and external app code should prefer
-`data_query` when the product surface exposes it. The shell path is a
-compatibility fallback for agent-side work.
+```text
+workspace_shell("connection list --json")
+```
 
-## Query one connection
+Pick the connection(s) needed. Confirm `query` appears in each connection's
+`capabilities`.
 
-1. Discover connections and confirm capabilities. Prefer `connections_list`
-   when available. Otherwise use:
+### Step 3 — Load connection context
 
-   ```text
-   workspace_shell("connection list --json")
-   ```
+For each connection:
 
-   Pick a connection. Confirm the verb you need is listed in its
-   `capabilities`.
+```text
+workspace_shell("cat connections/<name>/README.md connections/<name>/SYNTAX.md connections/<name>/RULES.md")
+```
 
-2. Read the connection's docs.
+`RULES.md` is long-term memory for that connection — field quirks, naming
+conventions, reliable query patterns, and known limitations accumulated from
+prior sessions. Read it before authoring any query.
 
-   ```text
-   workspace_shell("cat connections/<name>/README.md connections/<name>/SYNTAX.md connections/<name>/RULES.md")
-   ```
+### Step 4 — Inspect schema and existing queries
 
-3. If the connection is new or credentials changed, verify them.
+```text
+workspace_shell("ls connections/<name>/queries/ connections/<name>/metadata/")
+```
 
-   ```text
-   workspace_shell("connection test <name> --json")
-   ```
+If `describe` is in capabilities and metadata is missing or stale:
 
-4. Look at existing queries and metadata before authoring.
+```text
+workspace_shell("connection describe <name> --json")
+```
 
-   ```text
-   workspace_shell("ls connections/<name>/queries/ connections/<name>/metadata/")
-   ```
+Prefer adapting an existing query over writing from scratch.
 
-5. Refresh metadata if it is missing or stale and `describe` is in
-   capabilities.
+### Step 5 — Author a query file
 
-   ```text
-   workspace_shell("connection describe <name> --json")
-   ```
+Write to a file under `connections/<name>/queries/`. Use a business-readable
+filename. The file extension and query format are determined by the connection
+type — use `SYNTAX.md` (loaded in Step 3) as the authoritative reference for
+both. Do not default to `.sql` unless SYNTAX.md confirms the connection uses SQL.
 
-6. Author or reuse a query file under `connections/<name>/queries/`. Prefer a
-   business-readable filename and the extension appropriate for the
-   connection's query language.
+```text
+workspace_shell("""cat > connections/<name>/queries/<filename>.<ext> <<'EOF'
+<query content per SYNTAX.md>
+EOF""")
+```
 
-   ```text
-   workspace_shell("""cat > connections/<name>/queries/<file>.sql <<'SQL'
-   SELECT col FROM tbl WHERE condition
-   SQL""")
-   ```
+**Common patterns by connection type:**
 
-7. Execute the query through the product tool when available and the workflow
-   only needs bounded data:
+| Connection type | Extension | Query format |
+|---|---|---|
+| SQL databases (Snowflake, BigQuery, DuckDB) | `.sql` | Standard SQL `SELECT` |
+| Salesforce (SOQL) | `.json` | `{"soql": "SELECT ... FROM Object WHERE ..."}` |
+| Object storage (S3, SFTP) | `.json` | Path or glob pattern per SYNTAX.md |
+| Document storage (Google Drive, OneDrive) | `.json` | File path or search spec per SYNTAX.md |
+| Other SaaS APIs | `.json` | Endpoint + parameters object per SYNTAX.md |
 
-   ```json
-   {
-     "connection_name": "<name>",
-     "query_file": "connections/<name>/queries/<file>.sql",
-     "max_rows": 500
-   }
-   ```
+If SYNTAX.md does not specify an extension, default to `.json` for API-based
+connections and `.sql` for SQL-native connections.
 
-   Otherwise use the workspace path:
+### Step 6 — Execute the query
 
-   ```text
-   workspace_shell("connection query <name> --file connections/<name>/queries/<file>.sql --sample-rows 500 --json")
-   ```
+```text
+workspace_shell("connection query <name> --file connections/<name>/queries/<filename>.<ext> --sample-rows 10 --json")
+```
 
-## Join across connections through DUCKDB
+The full result is always materialized into DuckDB. `--sample-rows <n>` controls
+how many rows appear in `preview` (default 10; omitting it truncates silently).
+Pass `--sample-rows -1` when you need all rows in the payload. For large result
+sets prefer a DuckDB follow-up query instead. See the `using-connection-cli`
+skill for full flag reference and timeout guidance.
 
-DUCKDB is the in-workspace analytical connection.
+`preview` in the response envelope is a JSON-encoded **string** — call
+`json.loads(resp["preview"])` to get `list[dict]`. `rows` in the envelope is an
+int count, not a record list. For group-bys, totals, or joins, skip parsing
+`preview` and run a DuckDB query over `relation_name` (Step 7) instead.
+
+### Step 7 — Analyze and join through DuckDB
+
+Each upstream query materializes as a `relation_name` in DuckDB. Use it for
+aggregations, joins across connections, and transformations:
+
+```text
+workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+```
+
+Save reusable joins in `connections/DUCKDB/queries/`.
+
+### Step 8 — Export large results for the user
+
+When the user needs to retrieve a large result set, export from DuckDB to CSV
+in `/workspace/data/downloads/` for pickup from the MarcoPolo web UI:
+
+```sql
+COPY (SELECT * FROM <relation_name>) TO '/workspace/data/downloads/<filename>.csv' (HEADER, DELIMITER ',');
+```
+
+Run via:
+
+```text
+workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/export.sql --json")
+```
+
+### Step 9 — Offer to save learnings
+
+After answering the user's question, offer to save any new facts discovered —
+schema quirks, reliable query patterns, field naming conventions, known
+limitations — to the appropriate RULES.md:
+
+- Connection-specific: `connections/<name>/RULES.md`
+- Workspace-wide: `/workspace/RULES.md`
+
+Ask the user to confirm before writing. Saving these enriches the context layer
+for future sessions.
+
+## Join across connections through DuckDB
+
+DuckDB is the in-workspace analytical connection.
 
 1. Run each upstream `connection query` first and note each `relation_name`.
 2. Write a DuckDB SQL file that joins or transforms those relations.
-3. Execute through DUCKDB.
+3. Execute through DuckDB.
 
    ```text
    workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
    ```
-
-Save reusable joins in `connections/DUCKDB/queries/` and reusable Python or
-shell pipelines in `scripts/`.
 
 ## Work with files in the remote workspace
 
@@ -134,19 +178,26 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file
 
 ## Common pitfalls
 
-- The `connection` CLI only exists inside the remote workspace, so the client's
-  built-in shell cannot run it. Always use `workspace_shell` for workspace
-  commands.
+- The `connection` CLI only exists inside the remote workspace — always use
+  `workspace_shell` for workspace commands.
 - Trust `connection list --json` or `connections_list` for capabilities.
-- Query through named files, not inline SQL or inline JSON query bodies.
-- Keep compatibility queries bounded with `--sample-rows <n>`.
-- Query file paths in `--file` are workspace-relative.
+- Query through named files, not inline SQL.
+- **`--sample-rows` defaults to 10 and silently truncates.** Omitting it does
+  not return all rows — it caps `preview` at 10. If `row_count` exceeds the
+  length of `preview`, the result is truncated; use a higher `--sample-rows`
+  value to get more rows, or `--sample-rows -1` to get all rows in the payload.
+  The full dataset is always in DuckDB regardless of this flag.
+- Query file paths in `--file` resolve from `/workspace`, not from your current
+  directory — always include the `connections/<name>/` prefix. A bare
+  `queries/<file>` resolves to `/workspace/queries/<file>` and fails with
+  "No such file or directory" even if you just created the file via
+  `cd <connection-dir> && cat > queries/<file>`.
 
 ## Pointers
 
-- adding a connection or installing a demo -> `setup-connection`
-- per-verb flag reference -> `using-connection-cli`
-- workspace layout -> `using-marcopolo-workspace`
-- visualizing results -> `build-dashboard`
-- building a scheduled workflow -> `build-scheduled-pipeline`
-- managing an existing recurring run -> `setup-automation`
+- adding a connection or installing a demo → `setup-connection`
+- per-verb flag reference → `using-connection-cli`
+- workspace layout → `using-marcopolo-workspace`
+- visualizing results → `build-dashboard`
+- building a scheduled workflow → `build-scheduled-pipeline`
+- managing an existing recurring run → `setup-automation`
