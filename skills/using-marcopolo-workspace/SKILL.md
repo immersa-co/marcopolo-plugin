@@ -1,6 +1,6 @@
 ---
 name: using-marcopolo-workspace
-description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` and `cron` CLIs fit in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` and `cron` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
+description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` CLI fits in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
 ---
 
 # Using the MarcoPolo workspace
@@ -56,7 +56,7 @@ Two shell environments coexist in this session:
   `/workspace`.
 
 Your built-in tools cannot reach the MarcoPolo workspace. They cannot read or
-create files there, run the `connection` or `cron` CLIs that only exist there,
+create files there, run the `connection` CLI or `crontab` that only exist there,
 or see git state inside it. Only `workspace_shell` can.
 
 So for all MarcoPolo workspace work, such as reading files, writing queries,
@@ -143,7 +143,6 @@ connection unless that verb appears in its capabilities.
     uploads/
     downloads/
     databases/
-  schedules/
   .dv/
 ```
 
@@ -180,7 +179,7 @@ derived datasets.
 - metadata snapshots -> `connections/<name>/metadata/`
 - reusable programs -> `scripts/`
 - user-facing outputs -> `artifacts/`
-- schedule definitions -> `schedules/`
+- scheduled jobs -> the user crontab (`crontab -l`), not a workspace file
 - user-provided data -> `data/uploads/`
 - fetched data -> `data/downloads/`
 - database files -> `data/databases/`
