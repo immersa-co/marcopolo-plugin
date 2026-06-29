@@ -19,19 +19,36 @@ Get the minimum missing details:
 - Connection or data domain.
 - Metrics, filters, time range, and row limits.
 - Output target: Cowork Remote Artifact or runnable code.
-- Freshness: live query, reusable query file, or materialized result.
+- **Freshness: will this re-query live data at view/load time, or is a snapshot sufficient?**
+  - Live query at view time (Remote Artifact, external app, scheduled script) → use `data_query`
+  - One-off snapshot or report → embed the already-queried data inline; `data_query` not needed
 
 Do not ask for raw datasource credentials in chat. If connection access is
 missing, hand off to the connection setup/sharing flow. For non-Cowork runnable
 code, use a MarcoPolo developer API token supplied by the user's host/runtime
 environment, not an endpoint or token entered into the dashboard UI.
 
+## Session capability detection
+
+Only applies when building a **live-querying artifact** (one that re-queries at view or load time).
+For one-off snapshots, embed the data inline — no MCP tool needed at runtime.
+
+When building a live-querying artifact, check which tools the session exposes:
+
+- Sessions with `connections_list` and `data_query` (Claude, Cursor, etc.):
+  Use `data_query` for all live runtime queries in generated artifacts and apps.
+- Sessions with only `workspace_shell` (ChatGPT, older sessions):
+  Use bounded `workspace_shell("connection query <name> --file <file> --sample-rows <n> --json")`
+  for discovery and probing. Generated code for these sessions should use the
+  same `workspace_shell` query path with small `--sample-rows`, noting it can be
+  upgraded to `data_query` when the session gains that tool.
+
 ## Data Contract
 
-Use:
+For live-querying artifacts, use:
 
 - `connections_list` to discover visible connections.
-- `data_query` to fetch bounded dashboard data.
+- `data_query` to perform bounded live queries at view or load time.
 
 `data_query` requires a workspace-relative query file:
 

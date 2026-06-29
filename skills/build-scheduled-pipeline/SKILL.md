@@ -6,8 +6,9 @@ description: Build a MarcoPolo scheduled data or AI pipeline that queries govern
 # Build Scheduled Pipeline
 
 Create a scheduled MarcoPolo data or AI pipeline. The current implementation
-uses workspace scripts plus the `cron` CLI. Do not assume pipeline-specific MCP
-tools until MarcoPolo exposes first-class pipeline runtime objects.
+uses workspace scripts plus the standard `crontab` (stock cron in the pod). Do
+not assume pipeline-specific MCP tools until MarcoPolo exposes first-class
+pipeline runtime objects.
 
 ## Compatibility
 
@@ -81,15 +82,14 @@ setup flows when data access is missing.
    - Fix connection, SQL, Python, or DuckDB issues before scheduling.
 
 5. Create or update the schedule.
-   - Use `workspace_shell("cron create <name> --command \"<workspace-command>\" --cron \"<expr>\" --timeout <seconds> --json")`.
-   - Use `workspace_shell("cron list --json")`,
-     `workspace_shell("cron get <name> --json")`, and
-     `workspace_shell("cron history <name> --json")` to verify.
-   - Do not overwrite an existing schedule without user approval.
+   - Add the command to the user's crontab with the standard `crontab` (via
+     `workspace_shell`), redirecting output to a log file under `/workspace`.
+   - Don't drop or overwrite existing crontab lines without user approval.
+   - See `setup-automation` for the MarcoPolo-specific cron notes.
 
 6. Document operation.
    - State where outputs live.
-   - State how to inspect history and failures.
+   - State how to inspect runs and failures (the job's log file, `crontab -l`).
    - State what permissions are required for future runs.
 
 ## Verification
@@ -101,7 +101,7 @@ Before final response:
 - Outputs were created or verified.
 - Cron expression is valid.
 - Schedule was created, updated, or intentionally left as a dry-run artifact.
-- History or status command works when a schedule exists.
+- The job appears in `crontab -l`.
 
 ## Final Response
 
@@ -112,7 +112,7 @@ Return:
 - Schedule expression and timezone assumption.
 - Output locations.
 - Dry-run result.
-- Schedule status or history command.
+- How to see the schedule (`crontab -l`) and its run log.
 - Remaining setup, permission, or product-contract gaps.
 
 ## Boundary With Other Skills

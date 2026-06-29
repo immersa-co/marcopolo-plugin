@@ -58,6 +58,18 @@ Read the per-verb reference before running a verb you haven't run
 recently, especially for flags. The references include the exact
 response shape, common pitfalls, and follow-on commands.
 
+**`connection query` — three facts that cause most retries:**
+- **Path:** `--file` resolves from `/workspace`, ignoring cwd. Always pass
+  `connections/<name>/queries/<file>`; a bare `queries/<file>` fails with
+  "No such file or directory" even if the file was just created.
+- **`--sample-rows`:** defaults to 10 — omitting it silently truncates `preview`.
+  Use a higher value to get more rows, or `-1` to get all rows in the payload.
+- **Response:** `preview` is a JSON-encoded *string* — call `json.loads` on it
+  to get records; `rows` in the envelope is an int count, not a record list.
+  The full result lives in DuckDB as `relation_name`.
+
+See `references/query.md` for the full flag contract and response shape.
+
 ## Self-discovery
 
 When in doubt, ask the CLI directly:

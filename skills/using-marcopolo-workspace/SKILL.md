@@ -1,6 +1,6 @@
 ---
 name: using-marcopolo-workspace
-description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` and `cron` CLIs fit in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` and `cron` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
+description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` CLI fits in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
 ---
 
 # Using the MarcoPolo workspace
@@ -13,36 +13,39 @@ collection of queries, scripts, and artifacts.
 
 Two execution surfaces coexist in a MarcoPolo session:
 
-- Product MCP data tools for governed data reads:
-  - `connections_list`
-  - `data_query`
-- `workspace_shell` for workspace files, scripts, git, DuckDB, query authoring,
-  and cron operations inside `/workspace`
+- `workspace_shell` for all agent-side work: query authoring, analytics, DuckDB
+  joins, workspace files, scripts, git, and cron inside `/workspace`.
+- Product MCP data tools (`connections_list`, `data_query`) for generated code
+  that re-queries live data at view or load time — Remote Artifacts, external
+  web apps, scheduled scripts.
 
-Use the product data tools for simple governed data reads when the current
-session exposes them. Use `workspace_shell` for normal file and process work in
-the workspace.
+For all agent analytics, use `workspace_shell`. Reserve `data_query` for
+programmatic interfaces, not for the agent's own data exploration.
 
-## Compatibility
+## Session capability detection
 
-Older agent sessions may expose only `workspace_shell`. In those sessions, use
-the compatibility path for agent-side work:
+Check which tools are available in the current session before choosing a path:
 
-- `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
-- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
+- Sessions with `connections_list` and `data_query` (Claude, Cursor, etc.):
+  - Agent analytics → always use `workspace_shell`
+  - Programmatic interfaces (web apps, scripts, dashboards) → use `data_query`
+- Sessions with only `workspace_shell` (ChatGPT, older sessions):
+  - Agent analytics → use `workspace_shell`
+  - Generated artifact code → use bounded `workspace_shell("connection query <name> --file <file> --sample-rows <n> --json")`, noting in the code that it can be upgraded to `data_query` if the session gains that tool
 
-Treat shell query results as CLI envelopes rather than `data_query` payloads.
-Normalize them before reasoning over rows:
+`workspace_shell` is the primary analytics tool in every session. `data_query`
+is an addition for programmatic interfaces, not a replacement for agent work.
+
+When using `workspace_shell` for queries, treat results as CLI envelopes:
 
 - rows from `data`, otherwise `preview`
 - `row_count` from `row_count`, otherwise `len(rows)`
 - `run_id` if present
 - `relation_name` if present
 
-Generated dashboards, Remote Artifacts, and external app code should prefer
-`data_query` when the product surface exposes it. Do not teach generated code
-to call `workspace_shell`.
+If `row_count` exceeds the length of `preview`, the preview is truncated —
+use a higher `--sample-rows` value to get more rows, or `--sample-rows -1`
+to get all rows in the payload.
 
 ## Two shell environments
 
@@ -53,7 +56,7 @@ Two shell environments coexist in this session:
   `/workspace`.
 
 Your built-in tools cannot reach the MarcoPolo workspace. They cannot read or
-create files there, run the `connection` or `cron` CLIs that only exist there,
+create files there, run the `connection` CLI or `crontab` that only exist there,
 or see git state inside it. Only `workspace_shell` can.
 
 So for all MarcoPolo workspace work, such as reading files, writing queries,
@@ -140,7 +143,6 @@ connection unless that verb appears in its capabilities.
     uploads/
     downloads/
     databases/
-  schedules/
   .dv/
 ```
 
@@ -149,6 +151,15 @@ Always read first before authoring:
 - `workspace_shell("cat /workspace/RULES.md")`
 - `workspace_shell("cat /workspace/workflows/README.md")`
 - `workspace_shell("cat connections/<name>/README.md connections/<name>/RULES.md connections/<name>/SYNTAX.md")`
+- Before authoring or running any query, also read the `query-and-analyze` and
+  `using-connection-cli` skills — they are prerequisites, not optional
+  further reading.
+
+`RULES.md` files are long-term memory — the workspace-level one holds general
+conventions, and each `connections/<name>/RULES.md` holds connection-specific
+facts: field quirks, reliable query patterns, naming conventions accumulated
+from prior sessions. Read them before authoring queries and update them when
+you discover new facts.
 
 ## DUCKDB is a connection
 
@@ -168,7 +179,7 @@ derived datasets.
 - metadata snapshots -> `connections/<name>/metadata/`
 - reusable programs -> `scripts/`
 - user-facing outputs -> `artifacts/`
-- schedule definitions -> `schedules/`
+- scheduled jobs -> the user crontab (`crontab -l`), not a workspace file
 - user-provided data -> `data/uploads/`
 - fetched data -> `data/downloads/`
 - database files -> `data/databases/`
@@ -182,4 +193,4 @@ Do not write to `.dv/`; it is runtime-managed.
 - building a chart or dashboard -> `build-dashboard`
 - building a scheduled data or AI workflow -> `build-scheduled-pipeline`
 - managing an existing recurring job -> `setup-automation`
-- looking up a `connection` CLI verb or flag -> `using-connection-cli`
+- before running any `connection` verb (even routine ones) -> `using-connection-cli`
