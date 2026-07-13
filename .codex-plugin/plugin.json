@@ -1,8 +1,8 @@
 {
   "name": "marcopolo",
   "displayName": "MarcoPolo",
-  "version": "3.2.0",
-  "description": "Secure, persistent remote workspace for analytics, dashboards, and automations across one or more company data connections",
+  "version": "3.3.0",
+  "description": "Secure, persistent remote workspace for analytics across one or more company data connections",
   "author": {
     "name": "MarcoPolo",
     "url": "https://github.com/immersa-co"
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "MarcoPolo",
     "shortDescription": "Codex access to MarcoPolo data workflows",
-    "longDescription": "Query connections, build dashboards, and schedule automations inside a secure persistent MarcoPolo remote workspace using shared skills and MCP configuration.",
+    "longDescription": "Query connections and analyze company data inside a secure persistent MarcoPolo remote workspace using general usage skills and MCP configuration. User-editable workflow skills are managed in the MarcoPolo app.",
     "developerName": "MarcoPolo",
     "category": "Productivity",
     "brandColor": "#4b1635",

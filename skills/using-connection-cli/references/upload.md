@@ -37,6 +37,3 @@ have unintended side effects.
 - Pushing a generated artifact back to a shared drive.
 - Round-tripping a transformed file (download → process → upload).
 - Publishing a CSV/Parquet output produced by a scheduled job.
-
-For recurring uploads, drive `connection upload` from a cron job — see
-`setup-automation`.

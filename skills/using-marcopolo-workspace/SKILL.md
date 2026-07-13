@@ -125,8 +125,6 @@ connection unless that verb appears in its capabilities.
     README.md
     setup-connection.md
     query-and-analyze-data.md
-    build-dashboard.md
-    setup-automation.md
   connections/                    one subdirectory per visible connection
     <name>/
       README.md
@@ -190,7 +188,4 @@ Do not write to `.dv/`; it is runtime-managed.
 
 - adding a connection, installing a demo, fixing credentials -> `setup-connection`
 - querying data, exploring schemas, joining sources -> `query-and-analyze`
-- building a chart or dashboard -> `build-dashboard`
-- building a scheduled data or AI workflow -> `build-scheduled-pipeline`
-- managing an existing recurring job -> `setup-automation`
 - before running any `connection` verb (even routine ones) -> `using-connection-cli`
