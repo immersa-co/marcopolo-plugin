@@ -94,24 +94,6 @@ After installation, confirm the plugin exposes:
 Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a
 Codex session in this repo.
 
-## Skill ownership
-
-MarcoPolo skills have three distinct homes:
-
-- Internal development skills live in `marcopolo2/.agents/skills/`. They guide
-  contributors working on the product and do not ship to users.
-- General MarcoPolo usage skills live in this plugin's `skills/` directory.
-  They provide stable context for the workspace, connections, and analysis.
-- User-editable workflow skills live in each tenant's managed skill library.
-  MarcoPolo initially seeds `build-dashboard` and `build-scheduled-pipeline`;
-  users can edit or delete them in the app.
-
-Managed workflow skills are available from the app as individual or library
-zip downloads. MarcoPolo also exposes enabled skills as `skill://` MCP
-resources for clients that support skill discovery over MCP. They are not
-duplicated in this plugin. Scheduling uses standard cron, so there is no
-MarcoPolo-specific `setup-automation` skill.
-
 ## Session compatibility
 
 Newer MarcoPolo sessions may expose the preferred product data tools:
@@ -135,10 +117,8 @@ agent-session fallback, not the runtime contract for generated artifacts.
 ## How to use it
 
 Once the plugin is installed, use your client normally. The plugin adds the
-MarcoPolo MCP server plus general usage skills, so you can ask for data work in
-natural language without manually wiring tools together. Install enabled
-workflow skills from the MarcoPolo app when you want the managed dashboard or
-scheduled-pipeline procedures in a client that does not discover MCP skills.
+MarcoPolo MCP server plus shared skills, so you can ask for data work in
+natural language without manually wiring tools together.
 
 Good first prompts:
 
@@ -167,13 +147,13 @@ Behavior by client:
 
 ## Plugin contents
 
-| Component | Description |
-|---|---|
-| **MCP Server** | Connects to `https://mcp.marcopolo.dev` |
-| **Claude plugin** | `.claude-plugin/plugin.json` |
-| **Codex plugin** | `.codex-plugin/plugin.json` |
-| **Agent** | `marcopolo` - data analyst with workspace-first defaults (Claude only) |
-| **Context skills** | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze` |
+| Component         | Description                                                                                  |
+|-------------------|----------------------------------------------------------------------------------------------|
+| **MCP Server**    | Connects to `https://mcp.marcopolo.dev`                                                      |
+| **Claude plugin** | `.claude-plugin/plugin.json`                                                                 |
+| **Codex plugin**  | `.codex-plugin/plugin.json`                                                                  |
+| **Agent**         | `marcopolo` - data analyst with workspace-first defaults (Claude only)                       |
+| **Skills**        | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze` |
 
 ## In-workspace guidance
 
