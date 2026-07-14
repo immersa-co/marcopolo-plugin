@@ -33,9 +33,6 @@ Run `/skills` in Claude Code. You should see:
 - `using-connection-cli`
 - `setup-connection`
 - `query-and-analyze`
-- `build-dashboard`
-- `build-scheduled-pipeline`
-- `setup-automation`
 
 ### Codex
 
@@ -92,9 +89,6 @@ After installation, confirm the plugin exposes:
 - `using-connection-cli`
 - `setup-connection`
 - `query-and-analyze`
-- `build-dashboard`
-- `build-scheduled-pipeline`
-- `setup-automation`
 
 Also confirm the `marcopolo` MCP server loads from `.mcp.json` when you start a
 Codex session in this repo.
@@ -152,13 +146,13 @@ Behavior by client:
 
 ## Plugin contents
 
-| Component | Description |
-|-----------|-------------|
-| **MCP Server** | Connects to `https://mcp.marcopolo.dev` |
-| **Claude plugin** | `.claude-plugin/plugin.json` |
-| **Codex plugin** | `.codex-plugin/plugin.json` |
-| **Agent** | `marcopolo` - data analyst with workspace-first defaults (Claude only) |
-| **Skills** | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze`, `build-dashboard`, `build-scheduled-pipeline`, `setup-automation` |
+| Component         | Description                                                                                  |
+|-------------------|----------------------------------------------------------------------------------------------|
+| **MCP Server**    | Connects to `https://mcp.marcopolo.dev`                                                      |
+| **Claude plugin** | `.claude-plugin/plugin.json`                                                                 |
+| **Codex plugin**  | `.codex-plugin/plugin.json`                                                                  |
+| **Agent**         | `marcopolo` - data analyst with workspace-first defaults (Claude only)                       |
+| **Skills**        | `using-marcopolo-workspace`, `using-connection-cli`, `setup-connection`, `query-and-analyze` |
 
 ## In-workspace guidance
 

@@ -70,13 +70,14 @@ user when a strategy is not working.
 
 ## Skills
 
-For detailed procedures, see the corresponding skill:
+This plugin provides the general MarcoPolo usage skills:
 
 - `using-marcopolo-workspace` -> orientation and layout
 - `using-connection-cli` -> `connection` verb and flag reference
 - `setup-connection` -> add a connection
 - `query-and-analyze` -> query, join through DuckDB, analyze workspace files
-- `build-dashboard` -> live dashboard or generated app guidance
-- `build-scheduled-pipeline` -> design, implement, validate, and schedule a
-  workflow
-- `setup-automation` -> manage an existing recurring job
+
+The user's managed skill library may also provide editable workflow skills,
+including `build-dashboard` and `build-scheduled-pipeline`. Use them when they
+are installed or exposed by the client. Scheduling itself uses standard cron;
+it does not require a MarcoPolo-specific automation skill.

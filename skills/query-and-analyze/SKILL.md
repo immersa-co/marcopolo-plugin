@@ -198,6 +198,3 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file
 - adding a connection or installing a demo → `setup-connection`
 - per-verb flag reference → `using-connection-cli`
 - workspace layout → `using-marcopolo-workspace`
-- visualizing results → `build-dashboard`
-- building a scheduled workflow → `build-scheduled-pipeline`
-- managing an existing recurring run → `setup-automation`
