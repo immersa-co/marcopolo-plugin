@@ -3,9 +3,8 @@
 The MarcoPolo plugin connects Claude and Codex to a secure, persistent remote
 workspace for working with company data, querying connections, joining results
 across sources, building dashboards, and running scheduled workflows. It
-bundles the MarcoPolo MCP server plus general usage skills that keep
-workspace-first data work consistent across clients. User-editable workflow
-skills are managed separately in the MarcoPolo app.
+bundles the MarcoPolo MCP server plus shared skills that keep workspace-first
+data work consistent across clients.
 
 ## Installation
 
