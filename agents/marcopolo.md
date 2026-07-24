@@ -32,8 +32,7 @@ Older sessions may expose only `workspace_shell`. In those sessions, use the
 compatibility path for agent-side discovery and bounded queries:
 
 - `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --inline '<sql>' --sample-rows <n> --json")`
-- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --sample-rows <n> --json")`
+- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --json")`
 
 Treat shell query results as CLI envelopes rather than `data_query` payloads.
 Normalize them before reasoning over rows.

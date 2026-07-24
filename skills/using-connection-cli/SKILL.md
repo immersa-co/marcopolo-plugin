@@ -62,9 +62,10 @@ response shape, common pitfalls, and follow-on commands.
 - **Path:** `--file` resolves from `/workspace`, ignoring cwd. Always pass
   `connections/<name>/queries/<file>`; a bare `queries/<file>` fails with
   "No such file or directory" even if the file was just created.
-- **`--sample-rows`:** defaults to 10 — omitting it silently truncates `preview`.
-  Use a higher value to get more rows, or `-1` to get all rows in the payload.
-- **Response:** `preview` is a JSON-encoded *string* — call `json.loads` on it
+- **Rows vs. handle:** rows come back in `data` by default; pass `--relation` to
+  get only the relation handle for a large result you'll query further in DuckDB.
+  Add a SQL `LIMIT` when you only need a sample.
+- **Response:** `data` is a JSON-encoded *string* — call `json.loads` on it
   to get records; `rows` in the envelope is an int count, not a record list.
   The full result lives in DuckDB as `relation_name`.
 
