@@ -1,7 +1,7 @@
 # `connection query`
 
 ```
-workspace_shell("connection query <name> --file <query-file> [--params-json <json>] [--sample-rows <n>] --json")
+workspace_shell("connection query <name> --file <query-file> [--params-json <json>] [--include-results] --json")
 ```
 
 Execute a saved query file against a connection.
@@ -29,24 +29,15 @@ of `--file`.
 - `--params-json <json>` — JSON object of parameter values for parameterized
   queries.
 - `--input-data <data>` — input bytes for queries that need them.
-- `--sample-rows <n>` — controls how many rows come back into the agent's
-  context window. The full result is **always materialized into DuckDB
-  regardless** of this value. Default 10.
+- `--include-results` — also return the result rows in `data`. By default
+  (without this flag) a query returns only the DuckDB relation handle
+  (`relation_name` + `row_count` + `column_count`), not the rows, so a large
+  result never floods the context window. Pass this when you need the rows
+  inline, and add a SQL `LIMIT` for large results.
 
-  Size this to what the agent needs for reasoning and display — not to
-  capture the full dataset, which is already in DuckDB.
-
-  | Purpose | Recommended value |
-  |---|---|
-  | Schema / data shape check | 5–10 |
-  | Verify query returned expected rows | 5–20 |
-  | Display a bounded list to the user | 50–100 |
-  | Aggregation or join (query DuckDB instead) | 5–20 |
-
-  For large result sets, prefer a DuckDB aggregation or export to CSV in
-  `/workspace/data/downloads/` for the user to retrieve from the web UI rather
-  than pulling all rows into the context window. For small result sets (a few
-  dozen rows), `-1` is appropriate and avoids truncation:
+  For aggregations or large result sets, prefer a DuckDB follow-up over
+  `--include-results`. To hand a large result to the user, export from DuckDB to
+  CSV in `/workspace/data/downloads/` for retrieval from the web UI:
 
   ```sql
   COPY (SELECT * FROM <relation_name>) TO '/workspace/data/downloads/<file>.csv' (HEADER, DELIMITER ',');
@@ -86,41 +77,42 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 | `success` | bool | Whether the query ran |
 | `row_count` | int | Total rows in the full result (materialized in DuckDB) |
 | `rows` | int | Duplicate of `row_count` — **NOT a list of records**. Ignore it. |
-| `preview` | **string** | JSON-encoded array of the sampled rows. **Must be `json.loads`-ed before use.** Row count bounded by `--sample-rows`. |
+| `data` | **string** | JSON-encoded array of the result rows. **Must be `json.loads`-ed before use.** Present only when `--include-results` was passed. |
 | `relation_name` | string | DuckDB relation holding the full result set |
 | `column_count` | int | Number of columns in the result |
 | `run_id`, `query_file`, `execution_time`, `next_actions` | — | Run metadata |
 
 ### Reading rows from the envelope
 
-`preview` is a **string**, not a native array. Parse it before use:
+`data` is a **string**, not a native array. Parse it before use:
 
 ```python
 import json
 resp = json.loads(workspace_shell_output)       # parse the outer envelope
-records = json.loads(resp["preview"])           # parse preview string → list[dict]
-# len(records) is the sampled row count (bounded by --sample-rows)
+records = json.loads(resp["data"])              # parse data string → list[dict]
+# len(records) is the number of rows returned
 ```
 
 Common mistakes:
-- `len(resp["preview"])` counts **characters**, not rows.
+- `len(resp["data"])` counts **characters**, not rows.
 - `resp["rows"]` is an **int**, not a record list — do not iterate it.
-- Iterating `resp["preview"]` without parsing yields characters →
+- Iterating `resp["data"]` without parsing yields characters →
   `'str' object has no attribute 'get'`.
 
 ### Prefer DuckDB for anything beyond a quick look
 
 For aggregations, joins, group-bys, or totals, do not parse a large
-`preview` and aggregate in Python. The full result is already in DuckDB as
-`relation_name`; run a follow-up DuckDB query instead:
+`data` payload and aggregate in Python. The full result is already in DuckDB as
+`relation_name` (the default response), so run a follow-up DuckDB query against
+it instead:
 
 ```
 workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<followup>.sql --json")
 ```
 
 The DuckDB SQL can reference the materialized `relation_name` directly —
-no need to re-run the upstream query. Reserve `preview` parsing for small
-samples and display.
+no need to re-run the upstream query. Reserve `data` parsing for small
+results and display.
 
 ## Timeout
 

@@ -31,21 +31,22 @@ Check which tools are available in the current session before choosing a path:
   - Programmatic interfaces (web apps, scripts, dashboards) → use `data_query`
 - Sessions with only `workspace_shell` (ChatGPT, older sessions):
   - Agent analytics → use `workspace_shell`
-  - Generated artifact code → use bounded `workspace_shell("connection query <name> --file <file> --sample-rows <n> --json")`, noting in the code that it can be upgraded to `data_query` if the session gains that tool
+  - Generated artifact code → use `workspace_shell("connection query <name> --file <file> --json")` (bound with a SQL `LIMIT`), noting in the code that it can be upgraded to `data_query` if the session gains that tool
 
 `workspace_shell` is the primary analytics tool in every session. `data_query`
 is an addition for programmatic interfaces, not a replacement for agent work.
 
 When using `workspace_shell` for queries, treat results as CLI envelopes:
 
-- rows from `data`, otherwise `preview`
+- rows from `data` (present only when `--include-results` was passed)
 - `row_count` from `row_count`, otherwise `len(rows)`
 - `run_id` if present
 - `relation_name` if present
 
-If `row_count` exceeds the length of `preview`, the preview is truncated —
-use a higher `--sample-rows` value to get more rows, or `--sample-rows -1`
-to get all rows in the payload.
+By default a query returns only the relation handle (`relation_name` +
+`row_count` + `column_count`); pass `--include-results` for the rows in `data`.
+For large results, query the relation in DuckDB rather than pulling every row
+into `data`.
 
 ## Two shell environments
 
