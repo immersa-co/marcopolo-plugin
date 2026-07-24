@@ -38,14 +38,15 @@ is an addition for programmatic interfaces, not a replacement for agent work.
 
 When using `workspace_shell` for queries, treat results as CLI envelopes:
 
-- rows from `data` (present by default; absent when `--relation` was passed)
+- rows from `data` (present only when `--include-results` was passed)
 - `row_count` from `row_count`, otherwise `len(rows)`
 - `run_id` if present
 - `relation_name` if present
 
-For a large result, pass `--relation` to get only the relation handle
-(`relation_name` + `row_count`) and query the full set in DuckDB, rather than
-pulling every row into `data`.
+By default a query returns only the relation handle (`relation_name` +
+`row_count` + `column_count`); pass `--include-results` for the rows in `data`.
+For large results, query the relation in DuckDB rather than pulling every row
+into `data`.
 
 ## Two shell environments
 

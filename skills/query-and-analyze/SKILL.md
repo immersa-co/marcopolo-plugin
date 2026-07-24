@@ -10,9 +10,10 @@ DuckDB materialization, joins across sources, and file analysis.
 
 **Tool selection:**
 - `workspace_shell("connection query ...")` is the correct tool for all agent
-  analytics. The full result is always materialized into DuckDB and returned in
-  `data`; pass `--relation` to get only the relation handle for a large result
-  you intend to query further.
+  analytics. The full result is always materialized into DuckDB; by default the
+  command returns only the relation handle (`relation_name` + `row_count` +
+  `column_count`), not the rows. Pass `--include-results` when you need the rows
+  inline in `data`.
 - `data_query` is for generated code that re-queries live data at view or load
   time: Remote Artifacts, external web apps, scheduled scripts. Do not use it
   for agent analytics or one-off snapshot visualizations — embed those inline.
@@ -101,12 +102,12 @@ connections and `.sql` for SQL-native connections.
 workspace_shell("connection query <name> --file connections/<name>/queries/<filename>.<ext> --json")
 ```
 
-The full result is always materialized into DuckDB and returned in `data`. For a
-large result you intend to query further, pass `--relation` to get only the
-relation handle (`relation_name` + `row_count` + `column_count`) instead of the
-rows, then query it in DuckDB (Step 7). Add a SQL `LIMIT` when you only need a
-sample. See the `using-connection-cli` skill for full flag reference and timeout
-guidance.
+The full result is always materialized into DuckDB. By default the command
+returns only the relation handle (`relation_name` + `row_count` +
+`column_count`), not the rows — so a large result never floods context. Query
+the relation in DuckDB (Step 7), or pass `--include-results` to get the rows
+inline in `data`, bounding large results with a SQL `LIMIT`. See the
+`using-connection-cli` skill for full flag reference and timeout guidance.
 
 `data` in the response envelope is a JSON-encoded **string** — call
 `json.loads(resp["data"])` to get `list[dict]`. `rows` in the envelope is an
@@ -184,10 +185,10 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file
   `workspace_shell` for workspace commands.
 - Trust `connection list --json` or `connections_list` for capabilities.
 - Query through named files, not inline SQL.
-- **Large results: use `--relation` or a SQL `LIMIT`.** By default every row is
-  returned in `data`. For a big result, either add a `LIMIT` to the query or pass
-  `--relation` to get only the relation handle and query the full set in DuckDB.
-  The full dataset is always materialized in DuckDB regardless.
+- **Rows are opt-in.** By default a query returns only the relation handle, not
+  the rows; the full dataset is materialized in DuckDB regardless. Pass
+  `--include-results` for the rows inline (with a SQL `LIMIT` for large results),
+  or query the relation in DuckDB.
 - Query file paths in `--file` resolve from `/workspace`, not from your current
   directory — always include the `connections/<name>/` prefix. A bare
   `queries/<file>` resolves to `/workspace/queries/<file>` and fails with

@@ -1,7 +1,7 @@
 # `connection query`
 
 ```
-workspace_shell("connection query <name> --file <query-file> [--params-json <json>] [--relation] --json")
+workspace_shell("connection query <name> --file <query-file> [--params-json <json>] [--include-results] --json")
 ```
 
 Execute a saved query file against a connection.
@@ -29,13 +29,14 @@ of `--file`.
 - `--params-json <json>` — JSON object of parameter values for parameterized
   queries.
 - `--input-data <data>` — input bytes for queries that need them.
-- `--relation` — return only the DuckDB relation handle (`relation_name` +
-  `row_count` + `column_count`) instead of the rows. Use it for a large result
-  you intend to query further in DuckDB, to avoid pulling every row into the
-  context window. By default (without this flag) the rows come back in `data`.
+- `--include-results` — also return the result rows in `data`. By default
+  (without this flag) a query returns only the DuckDB relation handle
+  (`relation_name` + `row_count` + `column_count`), not the rows, so a large
+  result never floods the context window. Pass this when you need the rows
+  inline, and add a SQL `LIMIT` for large results.
 
-  For large result sets, prefer `--relation` plus a DuckDB aggregation, or a SQL
-  `LIMIT` in the query. To hand a large result to the user, export from DuckDB to
+  For aggregations or large result sets, prefer a DuckDB follow-up over
+  `--include-results`. To hand a large result to the user, export from DuckDB to
   CSV in `/workspace/data/downloads/` for retrieval from the web UI:
 
   ```sql
@@ -76,7 +77,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 | `success` | bool | Whether the query ran |
 | `row_count` | int | Total rows in the full result (materialized in DuckDB) |
 | `rows` | int | Duplicate of `row_count` — **NOT a list of records**. Ignore it. |
-| `data` | **string** | JSON-encoded array of the result rows. **Must be `json.loads`-ed before use.** Absent when `--relation` was passed. |
+| `data` | **string** | JSON-encoded array of the result rows. **Must be `json.loads`-ed before use.** Present only when `--include-results` was passed. |
 | `relation_name` | string | DuckDB relation holding the full result set |
 | `column_count` | int | Number of columns in the result |
 | `run_id`, `query_file`, `execution_time`, `next_actions` | — | Run metadata |
@@ -102,8 +103,8 @@ Common mistakes:
 
 For aggregations, joins, group-bys, or totals, do not parse a large
 `data` payload and aggregate in Python. The full result is already in DuckDB as
-`relation_name`; pass `--relation` on the upstream query and run a follow-up
-DuckDB query instead:
+`relation_name` (the default response), so run a follow-up DuckDB query against
+it instead:
 
 ```
 workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<followup>.sql --json")
