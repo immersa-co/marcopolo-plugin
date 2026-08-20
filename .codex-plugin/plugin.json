@@ -1,7 +1,6 @@
 {
   "name": "marcopolo",
-  "displayName": "MarcoPolo",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "Secure, persistent remote workspace for analytics across one or more company data connections",
   "author": {
     "name": "MarcoPolo",
@@ -25,6 +24,16 @@
     "longDescription": "Query connections and analyze company data inside a secure persistent MarcoPolo remote workspace using general usage skills and MCP configuration. User-editable workflow skills are managed in the MarcoPolo app.",
     "developerName": "MarcoPolo",
     "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "List the data connections available through MarcoPolo.",
+      "Inspect a data source and summarize its schema.",
+      "Analyze monthly revenue for the last 12 months."
+    ],
     "brandColor": "#4b1635",
     "composerIcon": "./assets/mp-symbol.png",
     "logo": "./assets/mp-symbol.png"

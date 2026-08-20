@@ -1,0 +1,69 @@
+name: Check Anthropic Community Sync
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Compare published versions
+        id: sync
+        continue-on-error: true
+        run: python3 .github/scripts/check_community_sync.py
+
+      - name: Open or refresh sync issue
+        if: steps.sync.outputs.status == 'stale'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOCAL_VERSION: ${{ steps.sync.outputs.local_version }}
+          COMMUNITY_VERSION: ${{ steps.sync.outputs.community_version }}
+          COMMUNITY_SHA: ${{ steps.sync.outputs.community_sha }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Anthropic community marketplace is behind the latest release"
+          issue_number=$(gh issue list --repo "${REPOSITORY}" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')
+          body=$(printf 'The Anthropic community marketplace has not yet picked up the latest MarcoPolo plugin release.\n\n- Plugin repository version: `%s`\n- Community-pinned version: `%s`\n- Community-pinned SHA: `%s`\n- Check run: %s\n\nAnthropic owns the community mirror and its SHA-bump pipeline. Keep this issue open until the scheduled check confirms that the versions match; escalate through the plugin-directory support channel if the lag exceeds the expected review window.' "${LOCAL_VERSION}" "${COMMUNITY_VERSION}" "${COMMUNITY_SHA}" "${RUN_URL}")
+          if [[ -n "${issue_number}" ]]; then
+            gh issue edit "${issue_number}" --repo "${REPOSITORY}" --body "${body}"
+          else
+            gh issue create --repo "${REPOSITORY}" --title "${title}" --body "${body}"
+          fi
+
+      - name: Close resolved sync issue
+        if: steps.sync.outputs.status == 'synced'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOCAL_VERSION: ${{ steps.sync.outputs.local_version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          title="Anthropic community marketplace is behind the latest release"
+          issue_number=$(gh issue list --repo "${REPOSITORY}" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')
+          if [[ -n "${issue_number}" ]]; then
+            gh issue close "${issue_number}" --repo "${REPOSITORY}" --comment "Community marketplace sync confirmed at plugin version ${LOCAL_VERSION}."
+          fi
+
+      - name: Fail on monitoring error
+        if: steps.sync.outputs.status == 'error' || steps.sync.outcome == 'failure'
+        env:
+          SYNC_ERROR: ${{ steps.sync.outputs.error }}
+        run: |
+          echo "Community sync check failed: ${SYNC_ERROR}" >&2
+          exit 1
