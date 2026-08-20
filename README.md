@@ -12,12 +12,53 @@ data work consistent across clients.
 
 #### Claude Code
 
+Install MarcoPolo from the MarcoPolo marketplace:
+
 ```bash
-git clone https://github.com/immersa-co/marcopolo-plugin.git
+claude plugin marketplace add immersa-co/marcopolo-plugins
+claude plugin install marcopolo@marcopolo-plugins
 ```
 
-Start Claude Code in the plugin directory or a parent directory. It detects the
-plugin automatically.
+Third-party marketplaces do not auto-update by default. In Claude Code, open
+`/plugin`, select **Marketplaces**, choose `marcopolo-plugins`, and enable
+auto-update. Background updates can take up to ten minutes after startup; run
+`/reload-plugins` when prompted or start a new session.
+
+Organization administrators can register the marketplace and enable updates in
+managed settings:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "marcopolo-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "immersa-co/marcopolo-plugins"
+      },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+Each user still installs the externally sourced plugin once with the command
+above. To force an update immediately:
+
+```bash
+claude plugin marketplace update marcopolo-plugins
+claude plugin update marcopolo@marcopolo-plugins
+```
+
+For local plugin development, clone the repository and load it explicitly for
+the session:
+
+```bash
+git clone https://github.com/immersa-co/marcopolo-plugin.git
+claude --plugin-dir ./marcopolo-plugin
+```
+
+Development-directory loading uses the checkout in place. Pull changes and
+start a new session to test a newer revision.
 
 #### Claude Desktop / Claude.ai
 
@@ -27,7 +68,8 @@ settings.
 
 #### Verify
 
-Run `/skills` in Claude Code. You should see:
+Run `/plugin details marcopolo@marcopolo-plugins` in Claude Code. The component
+inventory should include:
 
 - `using-marcopolo-workspace`
 - `using-connection-cli`
