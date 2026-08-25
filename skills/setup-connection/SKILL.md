@@ -1,6 +1,6 @@
 ---
 name: setup-connection
-description: Adds a new connection to the MarcoPolo workspace — hosted demo connections (no credentials) and credentialed connections to databases, warehouses, APIs, and storage (Postgres, Snowflake, BigQuery, Salesforce, S3, Google Drive, etc.). Use this skill whenever the user mentions adding, connecting, installing, hooking up, or wiring up a datasource — even when they describe it informally ("connect my Snowflake", "try the demo data", "let me hook up our Salesforce", "I want to look at the data in S3"). Also use when troubleshooting `connection test` failures, expired credentials, or an OAuth flow that didn't finish.
+description: Adds a new connection to the MarcoPolo workspace — hosted demo connections (no credentials) and credentialed connections to databases, warehouses, APIs, and storage (Postgres, Snowflake, BigQuery, Salesforce, QuickBooks Online, S3, Google Drive, etc.). Use this skill whenever the user mentions adding, connecting, installing, hooking up, or wiring up a datasource — even when they describe it informally ("connect my Snowflake", "try the demo data", "let me hook up our QuickBooks", "I want to look at the data in S3"). Also use when troubleshooting `connection test` failures, expired credentials, or an OAuth flow that didn't finish.
 ---
 
 # Set up a connection
@@ -49,7 +49,8 @@ account.
    ```
 
    `type` should be a canonical type value (`pg`, `mysql`, `snowflake`,
-   `bigquery`, `s3`, `google_drive`, `salesforce`, `local_file`, etc.). If
+   `bigquery`, `s3`, `google_drive`, `salesforce`, `quickbooks`, `local_file`,
+   etc.). If
    unsure, pass the user's words as `intent_text` and a best-guess `type` —
    the tool will resolve via intent if `type` is non-canonical. If still
    unknown, the response returns `valid_types` and `suggested_types`; pick
