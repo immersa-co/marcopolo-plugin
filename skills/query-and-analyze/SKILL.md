@@ -88,6 +88,7 @@ EOF""")
 | Connection type | Extension | Query format |
 |---|---|---|
 | SQL databases (Snowflake, BigQuery, DuckDB) | `.sql` | Standard SQL `SELECT` |
+| MongoDB and Amazon DocumentDB | `.json` | MongoDB query object per `SYNTAX.md` |
 | Salesforce (SOQL) | `.json` | `{"soql": "SELECT ... FROM Object WHERE ..."}` |
 | Object storage (S3, SFTP) | `.json` | Path or glob pattern per SYNTAX.md |
 | Document storage (Google Drive, OneDrive) | `.json` | File path or search spec per SYNTAX.md |

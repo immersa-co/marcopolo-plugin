@@ -17,9 +17,9 @@ through the MCP layer.
 ## Flags
 
 - `--type` (required) — canonical connection type. Examples: `pg`,
-  `mysql`, `snowflake`, `bigquery`, `s3`, `google_drive`, `salesforce`,
-  `local_file`. If you pass a non-canonical value, the CLI may resolve it
-  via aliases or via `--intent`.
+  `mysql`, `amazon_documentdb`, `snowflake`, `bigquery`, `s3`,
+  `google_drive`, `salesforce`, `local_file`. If you pass a non-canonical
+  value, the CLI may resolve it via aliases or via `--intent`.
 - `--intent` (optional) — free-text description of what the user wants to
   connect. Used as a fallback when `--type` is non-canonical or
   ambiguous.

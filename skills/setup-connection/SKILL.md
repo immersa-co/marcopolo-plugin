@@ -48,12 +48,12 @@ account.
    connection_setup(type="<canonical-type>", intent_text="<optional free text>")
    ```
 
-   `type` should be a canonical type value (`pg`, `mysql`, `snowflake`,
-   `bigquery`, `s3`, `google_drive`, `salesforce`, `local_file`, etc.). If
-   unsure, pass the user's words as `intent_text` and a best-guess `type` —
-   the tool will resolve via intent if `type` is non-canonical. If still
-   unknown, the response returns `valid_types` and `suggested_types`; pick
-   from those and retry.
+   `type` should be a canonical type value (`pg`, `mysql`,
+   `amazon_documentdb`, `snowflake`, `bigquery`, `s3`, `google_drive`,
+   `salesforce`, `local_file`, etc.). If unsure, pass the user's words as
+   `intent_text` and a best-guess `type` — the tool will resolve via intent if
+   `type` is non-canonical. If still unknown, the response returns
+   `valid_types` and `suggested_types`; pick from those and retry.
 
    On success, the response includes:
    - `url` — open this in a browser; the user signs in and configures
@@ -76,6 +76,19 @@ account.
 
    If it doesn't appear yet, wait briefly and retry — provisioning can take
    a moment.
+
+### Amazon DocumentDB setup
+
+Use the canonical type `amazon_documentdb`, rather than `mongodb`, for Amazon
+DocumentDB clusters. This keeps the connection identifiable as DocumentDB and
+enables its TLS compatibility settings while using the shared MongoDB query
+runtime.
+
+For a cluster reached through a bastion, collect the DocumentDB cluster
+endpoint and port separately and configure the SSH tunnel in the browser flow.
+Do not put the tunnel's local bind address into the saved connection. TLS, the
+AWS CA bundle, `retryWrites=false`, and the tunnel-safe direct connection mode
+are applied by the runtime.
 
 ## Post-install verification (both paths)
 
