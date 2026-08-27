@@ -19,6 +19,27 @@ For provider-specific operations that aren't expressible as a SQL file
 (some storage browsers, custom RPC calls), use `--op-json <json>` instead
 of `--file`.
 
+QuickBooks Online entity queries should normally be saved as plain `.sql`
+files:
+
+```sql
+SELECT * FROM Invoice WHERE TxnDate >= '2026-01-01' MAXRESULTS 100
+```
+
+Use a JSON operation file only when requesting connector-specific behavior such
+as automatic pagination, an individual entity read, a report, or Change Data
+Capture. For example:
+
+```json
+{
+  "operation": "query",
+  "query": "SELECT * FROM Invoice WHERE TxnDate >= '2026-01-01'",
+  "paginate": true,
+  "page_size": 1000,
+  "total_limit": 10000
+}
+```
+
 ## Flags
 
 - `--file <query-file>` — workspace-relative or absolute path to an

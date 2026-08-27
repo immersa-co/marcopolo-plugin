@@ -89,6 +89,7 @@ EOF""")
 |---|---|---|
 | SQL databases (Snowflake, BigQuery, DuckDB) | `.sql` | Standard SQL `SELECT` |
 | Salesforce (SOQL) | `.json` | `{"soql": "SELECT ... FROM Object WHERE ..."}` |
+| QuickBooks Online | `.sql` | QuickBooks SQL-like query; use `.json` for reports, CDC, direct reads, or automatic pagination |
 | Object storage (S3, SFTP) | `.json` | Path or glob pattern per SYNTAX.md |
 | Document storage (Google Drive, OneDrive) | `.json` | File path or search spec per SYNTAX.md |
 | Other SaaS APIs | `.json` | Endpoint + parameters object per SYNTAX.md |
