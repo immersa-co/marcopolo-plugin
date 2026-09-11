@@ -75,7 +75,10 @@ Treat `/workspace` like a checked-out repo. Common shapes:
 - list and search: `workspace_shell("ls connections/")`,
   `workspace_shell("rg <pattern> connections/")`
 - write and edit files: `workspace_shell` with heredocs, `sed`, or other shell
-  tools
+  tools, except managed connection `RULES.md` projections
+- update connection context: write the complete replacement to
+  `connections/<name>/scratch/`, then run
+  `workspace_shell("connection edit-context <name> <source-file>")`
 - run scripts: `workspace_shell("python scripts/<file>.py")`
 - inspect git state: `workspace_shell("git status")`,
   `workspace_shell("git diff")`
@@ -110,7 +113,8 @@ connection <verb> [args] --json
 ```
 
 Common verbs: `list`, `add`, `test`, `describe`, `query`, `browse`, `download`,
-`upload`. Always pass `--json` so output is structured.
+`upload`, `edit-context`. Pass `--json` for every verb except `edit-context`,
+which takes a source file and intentionally has no `--json` flag.
 
 `connection list --json` returns each connection's `capabilities` array. That
 list is authoritative. Never call `browse`, `download`, or `upload` on a
@@ -154,11 +158,12 @@ Always read first before authoring:
   `using-connection-cli` skills — they are prerequisites, not optional
   further reading.
 
-`RULES.md` files are long-term memory — the workspace-level one holds general
-conventions, and each `connections/<name>/RULES.md` holds connection-specific
-facts: field quirks, reliable query patterns, naming conventions accumulated
-from prior sessions. Read them before authoring queries and update them when
-you discover new facts.
+`RULES.md` files are long-term memory. The workspace-level one holds general
+conventions, while each `connections/<name>/RULES.md` is a managed projection
+of shared tenant context for that connection. Read them before authoring
+queries. After user confirmation, update connection context only through
+`connection edit-context <name> <source-file>`; direct edits are temporary and
+will be replaced on the next tenant refresh.
 
 ## DUCKDB is a connection
 
