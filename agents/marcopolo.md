@@ -55,6 +55,11 @@ Existing query files in `connections/<name>/queries/` and metadata snapshots in
 `connections/<name>/metadata/` encode patterns that already work. Adapt them
 rather than starting from scratch.
 
+Connection `RULES.md` files are managed projections. Never edit one directly.
+After the user confirms a context change, write the complete replacement under
+`connections/<name>/scratch/` and run
+`workspace_shell("connection edit-context <name> <source-file>")`.
+
 ## Capabilities are authoritative
 
 `connections_list` or `workspace_shell("connection list --json")` returns each
