@@ -1,7 +1,6 @@
 {
   "name": "marcopolo",
-  "displayName": "MarcoPolo",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "description": "Secure, persistent remote workspace for analytics across one or more company data connections",
   "author": {
     "name": "MarcoPolo",
@@ -10,7 +9,13 @@
   "homepage": "https://docs.marcopolo.dev/getting-started/claude-plugin",
   "repository": "https://github.com/immersa-co/marcopolo-plugin",
   "license": "Apache-2.0",
-  "keywords": ["data", "analytics", "mcp", "sql", "workspace"],
+  "keywords": [
+    "data",
+    "analytics",
+    "mcp",
+    "sql",
+    "workspace"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json"
 }

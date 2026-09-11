@@ -176,3 +176,12 @@ compatibility fallback for older sessions.
 ## License
 
 Apache-2.0
+
+## Databricks gateway mode
+
+When deployed with the per-user Databricks gateway, the service exposes
+`databricks_connections` and `databricks_query`. The query skill recognizes this
+mode and uses inline governed queries rather than workspace shell commands.
+It reports expired or missing Catalog grants without trying another execution
+path. This guidance is prepared for the matching product release; publish it
+only after the gateway tools are deployed.

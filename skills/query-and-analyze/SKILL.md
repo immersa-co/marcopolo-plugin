@@ -20,8 +20,28 @@ DuckDB materialization, joins across sources, and file analysis.
 
 **Session compatibility:** Some sessions (e.g. ChatGPT) expose only
 `workspace_shell` and do not have `connections_list` or `data_query`. Check
-which tools are available before deciding on a path. `workspace_shell` works
-in every session and is the primary analytics tool in all cases.
+which tools are available before deciding on a path. Use the Databricks gateway path below when that is the configured session;
+otherwise `workspace_shell` is the primary analytics tool.
+
+## Databricks gateway sessions
+
+When the user is querying through the Databricks MCP Service and the session
+exposes `databricks_connections` and `databricks_query`, use that governed path
+instead of the workspace workflow below:
+
+1. Call `databricks_connections` to discover the currently granted sources,
+   verified identity, capabilities and grant expiry.
+2. Call `databricks_query(connection_name, query, max_rows)` with inline SQL or
+   a supported JSON API operation. Start with a bounded read; writes require
+   the user's intended action and the matching Catalog capability.
+3. If access is absent or expired, report the need for individual OAuth login
+   or a Catalog permission sync. Do not switch to `workspace_shell`, ordinary
+   `data_query`, another identity, or caller-declared capability fields to
+   bypass a denial. Unknown operations are outside the supported subset.
+
+These tools do not require a saved query file. The gateway returns records
+inline. This mode applies only to a configured Databricks gateway session;
+ordinary Marcopolo workspace analytics continue to use the workflow below.
 
 ## Required workflow — follow every step
 

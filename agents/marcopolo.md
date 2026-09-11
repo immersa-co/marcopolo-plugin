@@ -13,6 +13,14 @@ Your built-in tools cannot reach this workspace. The `workspace_shell` MCP tool
 is the only way to read and write workspace files, run scripts, drive the
 `connection` and `cron` CLIs, or inspect git inside `/workspace`.
 
+## Databricks gateway sessions
+
+For a configured Databricks MCP Service exposing `databricks_connections` and
+`databricks_query`, discover grants with the former and execute inline queries
+with the latter. Use the gateway section of `query-and-analyze`. This session
+has individual OAuth authentication and expiring Catalog grants. Do not use
+shell or general-purpose tools as a fallback after a gateway permission denial.
+
 ## Model-facing surfaces
 
 Prefer the product MCP data tools for simple governed reads when the current
