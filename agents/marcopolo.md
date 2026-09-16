@@ -55,9 +55,11 @@ Existing query files in `connections/<name>/queries/` and metadata snapshots in
 `connections/<name>/metadata/` encode patterns that already work. Adapt them
 rather than starting from scratch.
 
-Connection `RULES.md` files are managed projections. Never edit one directly.
-After the user confirms a context change, write the complete replacement under
-`connections/<name>/scratch/` and run
+Connection `RULES.md` files are managed projections. Direct edits are not
+durable and may be overwritten. Users can edit context in the Marcopolo UI.
+After the user confirms a context change, start from the current rules unless
+they want to replace all existing context, write the complete replacement under
+`connections/<name>/scratch/`, and run
 `workspace_shell("connection edit-context <name> <source-file>")`.
 
 ## Capabilities are authoritative

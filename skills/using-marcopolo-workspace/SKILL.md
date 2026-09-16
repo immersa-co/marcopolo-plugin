@@ -162,8 +162,10 @@ Always read first before authoring:
 conventions, while each `connections/<name>/RULES.md` is a managed projection
 of shared tenant context for that connection. Read them before authoring
 queries. After user confirmation, update connection context only through
-`connection edit-context <name> <source-file>`; direct edits are temporary and
-will be replaced on the next tenant refresh.
+the Marcopolo UI or `connection edit-context <name> <source-file>`; direct edits
+are not durable and may be overwritten. The CLI source is a complete
+replacement, so start from the current rules unless the user wants to replace
+all existing context.
 
 ## DUCKDB is a connection
 
