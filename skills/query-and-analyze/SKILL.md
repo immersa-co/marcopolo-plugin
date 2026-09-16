@@ -146,19 +146,21 @@ After answering the user's question, offer to save any new facts discovered:
 schema quirks, reliable query patterns, field naming conventions, or known
 limitations. Ask the user to confirm before writing.
 
-For connection-specific context, write the complete proposed Markdown to a
-workspace file under `connections/<name>/scratch/`, then submit it through the
-connection command:
+For connection-specific context, start from the current `RULES.md` unless the
+user intentionally wants to replace all existing context. Write the complete
+proposed replacement to a workspace file under `connections/<name>/scratch/`,
+then submit it through the connection command:
 
 ```text
 workspace_shell("connection edit-context <name> connections/<name>/scratch/<file>.md")
 ```
 
 The command replaces that connection's tenant context for every user who can
-see it. It intentionally has no `--json` flag. Never edit the projected
-`connections/<name>/RULES.md` directly because the next tenant refresh replaces
-that file. Workspace-wide context remains `/workspace/RULES.md` and is not
-handled by `connection edit-context`.
+see it. It intentionally has no `--json` flag. Users can also update context in
+the Marcopolo UI. Never edit the projected `connections/<name>/RULES.md`
+directly because those changes are not durable and may be overwritten.
+Workspace-wide context remains `/workspace/RULES.md` and is not handled by
+`connection edit-context`.
 
 ## Join across connections through DuckDB
 
