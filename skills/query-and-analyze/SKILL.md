@@ -142,15 +142,25 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/expor
 
 ### Step 9 — Offer to save learnings
 
-After answering the user's question, offer to save any new facts discovered —
-schema quirks, reliable query patterns, field naming conventions, known
-limitations — to the appropriate RULES.md:
+After answering the user's question, offer to save any new facts discovered:
+schema quirks, reliable query patterns, field naming conventions, or known
+limitations. Ask the user to confirm before writing.
 
-- Connection-specific: `connections/<name>/RULES.md`
-- Workspace-wide: `/workspace/RULES.md`
+For connection-specific context, start from the current `RULES.md` unless the
+user intentionally wants to replace all existing context. Write the complete
+proposed replacement to a workspace file under `connections/<name>/scratch/`,
+then submit it through the connection command:
 
-Ask the user to confirm before writing. Saving these enriches the context layer
-for future sessions.
+```text
+workspace_shell("connection edit-context <name> connections/<name>/scratch/<file>.md")
+```
+
+The command replaces that connection's tenant context for every user who can
+see it. It intentionally has no `--json` flag. Users can also update context in
+the Marcopolo UI. Never edit the projected `connections/<name>/RULES.md`
+directly because those changes are not durable and may be overwritten.
+Workspace-wide context remains `/workspace/RULES.md` and is not handled by
+`connection edit-context`.
 
 ## Join across connections through DuckDB
 
@@ -194,6 +204,8 @@ workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file
   `queries/<file>` resolves to `/workspace/queries/<file>` and fails with
   "No such file or directory" even if you just created the file via
   `cd <connection-dir> && cat > queries/<file>`.
+- Do not edit a connection's projected `RULES.md` directly. Use
+  `connection edit-context <name> <source-file>` after user confirmation.
 
 ## Pointers
 

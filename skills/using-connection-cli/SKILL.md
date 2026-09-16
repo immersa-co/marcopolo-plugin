@@ -1,6 +1,6 @@
 ---
 name: using-connection-cli
-description: Reference for the in-workspace `connection` CLI — verb shape, JSON envelope, the capability rule, and per-verb flag details. Use this skill whenever any `connection` verb (`list`, `add`, `test`, `describe`, `query`, `browse`, `download`, `upload`) is about to run, when looking up flags, when checking whether a verb is allowed by a connection's capabilities, or when reading the JSON response. Consult it even for routine commands — guessing flag names or capability-gating leads to wasted work and surprising failures.
+description: Reference for the in-workspace `connection` CLI — verb shape, JSON envelope, the capability rule, and per-verb flag details. Use this skill whenever any `connection` verb (`list`, `add`, `test`, `describe`, `query`, `browse`, `download`, `upload`, `edit-context`) is about to run, when looking up flags, when checking whether a verb is allowed by a connection's capabilities, or when reading the JSON response. Consult it even for routine commands — guessing flag names or capability-gating leads to wasted work and surprising failures.
 ---
 
 # Using the `connection` CLI
@@ -13,9 +13,9 @@ invoke it through `workspace_shell`:
 workspace_shell("connection <verb> [args] --json")
 ```
 
-Always pass `--json`. The output is then a structured envelope you can
-parse — without `--json` you get human-formatted text that's harder to
-work with programmatically.
+Pass `--json` for every verb except `edit-context`. That command intentionally
+has no `--json` flag because its successful result is consumed by the
+authenticated MarcoPolo shell adapter.
 
 ## JSON envelope
 
@@ -53,6 +53,7 @@ capabilities — both come from the same source.
 | `browse` (gated) | List provider-side files for storage connections | `references/browse.md` |
 | `download` (gated) | Fetch a provider file into the workspace | `references/download.md` |
 | `upload` (gated) | Push a workspace file to the provider | `references/upload.md` |
+| `edit-context` | Replace shared tenant context from a workspace Markdown file | `references/edit-context.md` |
 
 Read the per-verb reference before running a verb you haven't run
 recently, especially for flags. The references include the exact
