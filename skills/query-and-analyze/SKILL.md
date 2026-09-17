@@ -146,8 +146,13 @@ After answering the user's question, offer to save any new facts discovered —
 schema quirks, reliable query patterns, field naming conventions, known
 limitations — to the appropriate RULES.md:
 
-- Connection-specific: `connections/<name>/RULES.md`
-- Workspace-wide: `/workspace/RULES.md`
+- Connection-specific: start from `connections/<name>/RULES.md`, prepare the
+  complete updated text in `connections/<name>/scratch/context.md`, then run
+  `connection edit-context <name> connections/<name>/scratch/context.md` through
+  `workspace_shell`. This requires connection ownership or tenant-admin access.
+- Workspace-wide: edit `/workspace/RULES.md` directly through `workspace_shell`.
+  It is personal to the user, and editing does not require Enterprise membership.
+  Sharing the file requires shared-artifact access and explicit user intent.
 
 Ask the user to confirm before writing. Saving these enriches the context layer
 for future sessions.

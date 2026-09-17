@@ -154,11 +154,26 @@ Always read first before authoring:
   `using-connection-cli` skills — they are prerequisites, not optional
   further reading.
 
-`RULES.md` files are long-term memory — the workspace-level one holds general
-conventions, and each `connections/<name>/RULES.md` holds connection-specific
-facts: field quirks, reliable query patterns, naming conventions accumulated
-from prior sessions. Read them before authoring queries and update them when
-you discover new facts.
+`/workspace/RULES.md` holds the user's personal rules across connections. Read
+it before authoring queries. Edit it directly through `workspace_shell` or in
+the Marcopolo UI. These are two ways to edit the same file, and the user's
+edits survive provisioning and session reloads. Editing does not require
+Enterprise membership. The file stays private unless the user explicitly
+shares it through the shared-artifact feature, which requires sharing access.
+Sharing does not replace the recipient's personal rules.
+
+`connections/<name>/RULES.md` holds connection-specific facts and is visible
+to users who can access that connection. Owners and tenant admins can edit it
+without an Enterprise requirement. Start from the existing content, write the
+proposed complete text to a scratch file, then submit it with:
+
+```text
+workspace_shell("connection edit-context <name> connections/<name>/scratch/context.md")
+```
+
+Do not edit the connection's `RULES.md` projection directly; a session reload
+replaces it from the saved connection rules. Connection sharing remains
+subject to the existing sharing permissions.
 
 ## DUCKDB is a connection
 
