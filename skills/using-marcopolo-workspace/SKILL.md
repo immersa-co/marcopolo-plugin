@@ -9,7 +9,11 @@ MarcoPolo is a persistent remote Linux workspace at `/workspace` for working
 with company data, building dashboards, scheduling jobs, and keeping a durable
 collection of queries, scripts, and artifacts.
 
-## Two execution surfaces
+For an application embedding its own Python agent, read
+[the SDK toolkit guide](references/sdk-toolkit.md). Its tools execute through
+the Python SDK and have different arguments from the MCP tools below.
+
+## MCP execution surfaces
 
 Two execution surfaces coexist in a MarcoPolo session:
 
@@ -19,7 +23,7 @@ Two execution surfaces coexist in a MarcoPolo session:
   that re-queries live data at view or load time — Remote Artifacts, external
   web apps, scheduled scripts.
 
-For all agent analytics, use `workspace_shell`. Reserve `data_query` for
+For agent analytics in an MCP session, use `workspace_shell`. Reserve `data_query` for
 programmatic interfaces, not for the agent's own data exploration.
 
 ## Session capability detection

@@ -15,6 +15,11 @@ is the only way to read and write workspace files, run scripts, drive the
 
 ## Model-facing surfaces
 
+When building an embedded Python agent with `marcopolo-sdk`, read
+`skills/using-marcopolo-workspace/references/sdk-toolkit.md`. The SDK tools
+use their published schemas; the MCP guidance in this section applies to MCP
+sessions.
+
 Prefer the product MCP data tools for simple governed reads when the current
 session exposes them:
 
