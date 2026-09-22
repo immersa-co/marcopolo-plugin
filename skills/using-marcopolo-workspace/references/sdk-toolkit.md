@@ -37,7 +37,8 @@ definitions ship with the SDK. The service publishes the catalog at
    `DUCKDB`. Request `inline=true` and a small `max_rows` for the final answer.
    `max_rows` limits returned records, not the materialized relation.
 5. Use `operation_records(operation_id=..., limit=..., offset=...)` when an
-   explicit page is needed. Those records enter the model context.
+   explicit page is needed. `limit` must be between 1 and 5,000 (default 500).
+   Those records enter the model context.
 
 `inline` defaults to true. Always set it to false when intermediate records
 should stay outside the prompt. The SDK `data_query` arguments are not the
@@ -49,6 +50,9 @@ The model reads `ToolExecution.text`; the application receives structured
 `ToolExecution.data`. LangChain places these in `ToolMessage.content` and
 `ToolMessage.artifact`. Keep artifacts out of the model prompt unless their
 contents are needed for the answer.
+
+An artifact result can have `row_count=null`; this means its row count is
+unknown. Follow the artifact guidance instead of treating it as an empty result.
 
 Failed requests and failed query operations set `ToolExecution.failed=true`
 and `ToolMessage.status="error"`. Rejected requests carry `data.error`;
