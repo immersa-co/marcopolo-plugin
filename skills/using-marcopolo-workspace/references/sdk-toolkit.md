@@ -2,8 +2,8 @@
 
 Use this path when building a Python application that embeds a LangGraph or
 LangChain agent with `marcopolo-sdk>=0.3.0`. The application supplies its own
-model and credentials. The plugin's MCP server remains a separate surface;
-inspect the installed tool schema before selecting arguments.
+model and credentials. Inspect the installed tool schema before selecting
+arguments, especially when working with an older MCP server.
 
 Install `marcopolo-sdk[langchain]`. The adapter supports
 `langchain-core>=0.3.79,<2` and produces asynchronous tools for LangGraph's
@@ -21,7 +21,12 @@ async with Marcopolo(access_token=user_token) as client:
 `client.toolkit.tools()` provides framework-neutral definitions;
 `await client.toolkit.execute(name, arguments)` executes one. These
 definitions ship with the SDK. The service publishes the catalog at
-`GET /api/v1/toolkit/tools` for other consumers.
+`GET /api/v1/toolkit/tools` for other consumers. Execution makes one call to
+`POST /api/v1/toolkit/tools/{name}/execute` with the bundled catalog version.
+The server validates arguments and returns `{content, data, failed}`. The SDK
+exposes `content` as `ToolExecution.text`. Unsupported versions raise before
+any tool work occurs; applications must update their SDK or use a supported
+contract.
 
 ## Discover, query, and combine
 
@@ -41,8 +46,11 @@ definitions ship with the SDK. The service publishes the catalog at
    Those records enter the model context.
 
 `inline` defaults to true. Always set it to false when intermediate records
-should stay outside the prompt. The SDK `data_query` arguments are not the
-MCP tool's `connection_name`, `query_file`, and `params` arguments.
+should stay outside the prompt. Current MCP `data_query` accepts the same
+canonical arguments and returns the same content, data, and failure status.
+MCP also accepts `connection_name`, `query_file`, and `params` as aliases for
+`connection`, `query_path`, and `parameters`. Do not supply conflicting aliases.
+Older MCP servers may expose only those aliases; inspect the tool schema.
 
 ## Results and failures
 
@@ -54,7 +62,7 @@ contents are needed for the answer.
 An artifact result can have `row_count=null`; this means its row count is
 unknown. Follow the artifact guidance instead of treating it as an empty result.
 
-Failed requests and failed query operations set `ToolExecution.failed=true`
+Recoverable requests, failed query operations, and failed setup sessions set `ToolExecution.failed=true`
 and `ToolMessage.status="error"`. Rejected requests carry `data.error`;
 operations that ran and failed preserve their identity and `data.failure`.
 Use the failure message or guidance to correct recoverable errors.

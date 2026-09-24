@@ -17,8 +17,12 @@ is the only way to read and write workspace files, run scripts, drive the
 
 When building an embedded Python agent with `marcopolo-sdk`, read
 `skills/using-marcopolo-workspace/references/sdk-toolkit.md`. The SDK tools
-use their published schemas; the MCP guidance in this section applies to MCP
-sessions.
+use the same server execution as the MCP data tools. Use canonical
+`data_query(connection, query_text/query_path, parameters, inline, max_rows)`
+arguments where supported; inspect older server schemas for legacy aliases.
+Keep intermediate queries at `inline=false`, then query their relations on
+`DUCKDB` for a bounded final answer. Both surfaces return server-authored
+content, structured data, and failure status.
 
 Prefer the product MCP data tools for simple governed reads when the current
 session exposes them:
