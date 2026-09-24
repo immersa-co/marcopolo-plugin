@@ -119,6 +119,12 @@ Once the plugin is installed, use your client normally. The plugin adds the
 MarcoPolo MCP server plus shared skills, so you can ask for data work in
 natural language without manually wiring tools together.
 
+For an application embedding its own LangGraph agent, `marcopolo-sdk>=0.3.0`
+provides an asynchronous toolkit through `marcopolo-sdk[langchain]`. See the
+[SDK toolkit guide](skills/using-marcopolo-workspace/references/sdk-toolkit.md)
+for discovery, cross-source queries, results kept outside model context, and
+end-user identity.
+
 Good first prompts:
 
 - `List the connections available through MarcoPolo and tell me which one looks relevant for revenue reporting.`

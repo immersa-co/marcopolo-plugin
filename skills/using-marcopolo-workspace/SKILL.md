@@ -9,32 +9,38 @@ MarcoPolo is a persistent remote Linux workspace at `/workspace` for working
 with company data, building dashboards, scheduling jobs, and keeping a durable
 collection of queries, scripts, and artifacts.
 
-## Two execution surfaces
+For an application embedding its own Python agent, read
+[the SDK toolkit guide](references/sdk-toolkit.md). Its tools execute through
+the same server executor used by the MCP data tools below.
 
-Two execution surfaces coexist in a MarcoPolo session:
+## MCP execution surfaces
 
-- `workspace_shell` for all agent-side work: query authoring, analytics, DuckDB
-  joins, workspace files, scripts, git, and cron inside `/workspace`.
-- Product MCP data tools (`connections_list`, `data_query`) for generated code
-  that re-queries live data at view or load time — Remote Artifacts, external
-  web apps, scheduled scripts.
+Use `connections_list` and `data_query` for governed queries when the current
+session exposes them. Current `data_query` accepts `connection` and exactly
+one of `query_text` or `query_path`, plus `parameters`, `max_rows`, and `inline`.
+Set `inline=false` for intermediate results; query their relations against
+connection `DUCKDB` with `inline=true` to return the final bounded answer.
+`max_rows` limits inline records, not the stored relation.
 
-For all agent analytics, use `workspace_shell`. Reserve `data_query` for
-programmatic interfaces, not for the agent's own data exploration.
+The result has `content`, structured `data`, and `failed`. MCP also preserves
+legacy query fields (`run_id`, `relation_name`, `rows`) and input aliases
+(`connection_name`, `query_file`, `params`) for generated applications. Read
+`data.error` or `data.failure` when `failed` is true and follow the guidance.
+
+Use `workspace_shell` for workspace files, durable query authoring, scripts,
+git, cron, and other commands inside `/workspace`. Read the connection's
+README, RULES, and SYNTAX files before authoring queries.
 
 ## Session capability detection
 
-Check which tools are available in the current session before choosing a path:
+Inspect the installed tool schemas. Older sessions may expose only
+`workspace_shell`, or a `data_query` accepting only the legacy aliases. Use the
+available schema. With only the shell, discover through `connection list --json`
+and run saved queries through `connection query <name> --file <path> --json`.
+Use `--include-results` only when rows are needed; bound final SQL with `LIMIT`.
 
-- Sessions with `connections_list` and `data_query` (Claude, Cursor, etc.):
-  - Agent analytics → always use `workspace_shell`
-  - Programmatic interfaces (web apps, scripts, dashboards) → use `data_query`
-- Sessions with only `workspace_shell` (ChatGPT, older sessions):
-  - Agent analytics → use `workspace_shell`
-  - Generated artifact code → use `workspace_shell("connection query <name> --file <file> --json")` (bound with a SQL `LIMIT`), noting in the code that it can be upgraded to `data_query` if the session gains that tool
-
-`workspace_shell` is the primary analytics tool in every session. `data_query`
-is an addition for programmatic interfaces, not a replacement for agent work.
+Generated apps can use `data_query` for fresh data when it is exposed. Keep
+intermediate records out of model prompts on every surface.
 
 When using `workspace_shell` for queries, treat results as CLI envelopes:
 

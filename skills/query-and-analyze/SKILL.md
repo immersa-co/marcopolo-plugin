@@ -8,20 +8,21 @@ description: Queries connections, joins results across sources through DuckDB, a
 Use this skill for all agent-side analytics: query authoring, schema exploration,
 DuckDB materialization, joins across sources, and file analysis.
 
-**Tool selection:**
-- `workspace_shell("connection query ...")` is the correct tool for all agent
-  analytics. The full result is always materialized into DuckDB; by default the
-  command returns only the relation handle (`relation_name` + `row_count` +
-  `column_count`), not the rows. Pass `--include-results` when you need the rows
-  inline in `data`.
-- `data_query` is for generated code that re-queries live data at view or load
-  time: Remote Artifacts, external web apps, scheduled scripts. Do not use it
-  for agent analytics or one-off snapshot visualizations — embed those inline.
+**Tool selection:** Use `data_query` for governed analytics when available.
+Current servers accept `connection`, exactly one of `query_text`/`query_path`,
+and `inline`. Set `inline=false` for intermediate results, then query the
+returned relation on connection `DUCKDB` with `inline=true` and a small
+`max_rows` for the final answer. Its `data` carries the result; `failed` and
+MCP's error status identify failures. Follow the server's recovery guidance.
 
-**Session compatibility:** Some sessions (e.g. ChatGPT) expose only
-`workspace_shell` and do not have `connections_list` or `data_query`. Check
-which tools are available before deciding on a path. `workspace_shell` works
-in every session and is the primary analytics tool in all cases.
+Use `workspace_shell` for the durable query files and shell workflow below.
+`connection query` materializes the full result and returns its reference;
+pass `--include-results` only when rows are needed inline in `data`.
+
+**Session compatibility:** Inspect the installed schema. Older `data_query`
+uses `connection_name`, `query_file`, and `params`; current servers accept
+those as aliases. Sessions exposing only `workspace_shell` can use the full
+CLI workflow below.
 
 ## Required workflow — follow every step
 
