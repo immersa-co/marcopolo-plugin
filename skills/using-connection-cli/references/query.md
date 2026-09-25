@@ -116,15 +116,28 @@ results and display.
 
 ## Timeout
 
-`connection query` runs via `workspace_shell`. The default 30s timeout is
-sufficient for simple queries. Pass a larger value for:
-
-- queries on large datasets or slow connections: 60–120s
-- `connection describe` operations: 30–60s
+`connection query` runs via `workspace_shell`. `timeout` is how long the call
+waits (default 30s, max 300s). The default is enough for simple queries; pass a
+larger value for queries on large datasets or slow connections (60–120s) and
+for `connection describe` (30–60s).
 
 ```text
 workspace_shell("connection query <name> --file ... --json", timeout=90)
 ```
+
+A command still running when `timeout` ends comes back with
+`status: "running"` and an `execution_id`, and keeps running for up to 300s in
+total. Check it with:
+
+```text
+workspace_shell("execution status <execution_id>")
+```
+
+The record shows `status` (`running`, `succeeded`, `failed`), the
+`failure.kind` (`timed_out`, `lost`, `command_failed`), and the tails of
+stdout/stderr. A workspace runs one such background command at a time: while
+one is running, another command that outlives its `timeout` is stopped and the
+response names the execution holding the slot — wait for it, then retry.
 
 ## When `query` fails
 
@@ -136,4 +149,7 @@ Common causes:
 - references a table/column that no longer exists → re-run
   `connection describe <name>` and update the query
 - credentials issue → run `connection test <name>` to confirm
-- timed out silently → re-run with a larger `timeout` value
+- `status: "running"` → check it with `execution status <execution_id>`
+  instead of re-running it
+- `failure.kind: "timed_out"` → it hit the 300s limit, or the background slot
+  was taken; narrow the query or wait for the running execution

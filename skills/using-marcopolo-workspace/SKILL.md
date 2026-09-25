@@ -92,7 +92,9 @@ Product data tools:
 
 Workspace and ext-app tools:
 
-- `workspace_shell(command, timeout=30)` for remote workspace commands
+- `workspace_shell(command, timeout=30)` for remote workspace commands; a
+  command outliving `timeout` returns `status: "running"` with an
+  `execution_id` — check it with `execution status <execution_id>`
 - `connection_setup(type, intent_text=None)` for credentialed connection setup
 - `install_demo_connection(demo_connection, display_name=None, intent_text=None)`
   for hosted demo connections
