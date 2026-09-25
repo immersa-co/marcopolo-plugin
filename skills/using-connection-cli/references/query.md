@@ -33,7 +33,9 @@ of `--file`.
   (without this flag) a query returns only the DuckDB relation handle
   (`relation_name` + `row_count` + `column_count`), not the rows, so a large
   result never floods the context window. Pass this when you need the rows
-  inline, and add a SQL `LIMIT` for large results.
+  inline, and add a SQL `LIMIT` for large results. Inline rows are capped at
+  1 MiB: past that the response returns the first rows that fit and sets
+  `data_truncated` (see below).
 
   For aggregations or large result sets, prefer a DuckDB follow-up over
   `--include-results`. To hand a large result to the user, export from DuckDB to
@@ -78,6 +80,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 | `row_count` | int | Total rows in the full result (materialized in DuckDB) |
 | `rows` | int | Duplicate of `row_count` — **NOT a list of records**. Ignore it. |
 | `data` | **string** | JSON-encoded array of the result rows. **Must be `json.loads`-ed before use.** Present only when `--include-results` was passed. |
+| `data_truncated` | object | Present only when `data` was cut at the 1 MiB inline cap: `{rows_returned, row_count}`. The full result is still in `relation_name`; `next_actions` has a ready-to-run DuckDB command for the next page. |
 | `relation_name` | string | DuckDB relation holding the full result set |
 | `column_count` | int | Number of columns in the result |
 | `run_id`, `query_file`, `execution_time`, `next_actions` | — | Run metadata |
@@ -149,6 +152,8 @@ Common causes:
 - references a table/column that no longer exists → re-run
   `connection describe <name>` and update the query
 - credentials issue → run `connection test <name>` to confirm
+- `data_truncated` present → not a failure; the rows beyond the 1 MiB cap are
+  in `relation_name`. Aggregate or filter there rather than paging through them
 - `status: "running"` → check it with `execution status <execution_id>`
   instead of re-running it
 - `failure.kind: "timed_out"` → it hit the 300s limit, or the background slot
