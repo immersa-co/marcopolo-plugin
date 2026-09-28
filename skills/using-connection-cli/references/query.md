@@ -91,7 +91,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 
 ```python
 import json
-resp = json.loads(workspace_shell_output)       # parse the outer envelope
+resp = json.loads(result["stdout"])             # the CLI envelope is workspace_shell's stdout
 records = json.loads(resp["data"])              # parse data string → list[dict]
 # len(records) is the number of rows returned
 ```
