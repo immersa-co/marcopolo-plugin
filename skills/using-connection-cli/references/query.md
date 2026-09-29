@@ -33,7 +33,9 @@ of `--file`.
   (without this flag) a query returns only the DuckDB relation handle
   (`relation_name` + `row_count` + `column_count`), not the rows, so a large
   result never floods the context window. Pass this when you need the rows
-  inline, and add a SQL `LIMIT` for large results.
+  inline, and add a SQL `LIMIT` for large results. Inline rows are capped at
+  1 MiB: past that the response returns the first rows that fit and sets
+  `data_truncated` (see below).
 
   For aggregations or large result sets, prefer a DuckDB follow-up over
   `--include-results`. To hand a large result to the user, export from DuckDB to
@@ -78,6 +80,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 | `row_count` | int | Total rows in the full result (materialized in DuckDB) |
 | `rows` | int | Duplicate of `row_count` — **NOT a list of records**. Ignore it. |
 | `data` | **string** | JSON-encoded array of the result rows. **Must be `json.loads`-ed before use.** Present only when `--include-results` was passed. |
+| `data_truncated` | object | Present only when `data` was cut at the 1 MiB inline cap: `{rows_returned, row_count}`. The full result is still in `relation_name`, and `next_actions` has a DuckDB command for the next page. If `rows_returned` is 0, one row alone exceeds the cap: select fewer or narrower columns. |
 | `relation_name` | string | DuckDB relation holding the full result set |
 | `column_count` | int | Number of columns in the result |
 | `run_id`, `query_file`, `execution_time`, `next_actions` | — | Run metadata |
@@ -88,7 +91,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 
 ```python
 import json
-resp = json.loads(workspace_shell_output)       # parse the outer envelope
+resp = json.loads(result["stdout"])             # the CLI envelope is workspace_shell's stdout
 records = json.loads(resp["data"])              # parse data string → list[dict]
 # len(records) is the number of rows returned
 ```
@@ -116,15 +119,41 @@ results and display.
 
 ## Timeout
 
-`connection query` runs via `workspace_shell`. The default 30s timeout is
-sufficient for simple queries. Pass a larger value for:
-
-- queries on large datasets or slow connections: 60–120s
-- `connection describe` operations: 30–60s
+`connection query` runs via `workspace_shell`. `timeout` is the longest the
+call waits (default 30s, max 300s); the call returns as soon as the command
+finishes, so a generous value costs nothing on a fast query. The default suits
+simple queries. For large datasets or slow connections pass 120–300 so the
+result comes back in the same call; use 30–60 for `connection describe`.
 
 ```text
-workspace_shell("connection query <name> --file ... --json", timeout=90)
+workspace_shell("connection query <name> --file ... --json", timeout=180)
 ```
+
+A command still running when `timeout` ends comes back with
+`status: "running"` and an `execution_id`, and keeps running for up to 300s in
+total. Do not re-run it. `execution status <execution_id>` answers immediately
+with the current record, so wait before you check rather than polling in a
+tight loop, and keep `timeout` above the sleep:
+
+```text
+workspace_shell("sleep 30; execution status <execution_id>", timeout=60)
+```
+
+The record is JSON in `stdout`: `status` (`running`, `succeeded`, `failed`),
+`failure` (`{kind, message}` or null), and `outcome` with `exit_code`,
+`stdout_tail`, and `stderr_tail`. The finished command's CLI envelope is the
+`stdout_tail` string, one level deeper than a query that finished within its
+call:
+
+```python
+record = json.loads(result["stdout"])
+resp = json.loads(record["outcome"]["stdout_tail"])   # the connection query envelope
+```
+
+A workspace has one background slot. Commands that finish within their
+`timeout` still run while it is taken, but another command that outlives its
+`timeout` is stopped with `failure.kind: "timed_out"`, and the message names
+the execution holding the slot.
 
 ## When `query` fails
 
@@ -136,4 +165,17 @@ Common causes:
 - references a table/column that no longer exists → re-run
   `connection describe <name>` and update the query
 - credentials issue → run `connection test <name>` to confirm
-- timed out silently → re-run with a larger `timeout` value
+- `failure.kind: "command_failed"` → the CLI exited non-zero. The reason is the
+  envelope's `error` and `message` in `stdout`; `failure.message` only gives the
+  exit code
+- `data_truncated` present → not a failure; the rows beyond the 1 MiB cap are
+  in `relation_name`. Aggregate or filter there rather than paging through them
+- `status: "running"` → wait, then check it with `execution status
+  <execution_id>` instead of re-running it
+- `failure.kind: "timed_out"` → `failure.message` says which limit was hit. For
+  the 300s runtime limit, narrow the query: filter, aggregate at the source, or
+  add a `LIMIT`. If the background slot was held, wait for the named execution
+  to finish, then retry
+- `failure.kind: "lost"` → the execution's supervisor stopped before it
+  recorded an outcome, for example because the workspace restarted. A query is
+  read-only, so re-run it
