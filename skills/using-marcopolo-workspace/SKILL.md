@@ -95,9 +95,13 @@ Workspace and ext-app tools:
 - `workspace_shell(command, timeout=30)` for remote workspace commands. It
   returns `execution_id`, `status` (`running`, `succeeded`, `failed`),
   `exit_code`, `stdout`, `stderr`, `failure` (`{kind, message}` or null), and
-  `next_actions`. A CLI's JSON envelope is the `stdout` string. A command
-  outliving `timeout` returns `status: "running"` — check it with
-  `execution status <execution_id>`
+  `next_actions`. A CLI's JSON envelope is the `stdout` string; when a CLI
+  fails (`command_failed`), that envelope explains why. `stdout` and `stderr`
+  keep the last 2 MiB, so trim large output with `head` or a query `LIMIT`.
+  The call returns once the command finishes, up to `timeout` (max 300). A
+  command outliving `timeout` returns `status: "running"` and keeps going.
+  Don't re-run it; check it with `execution status <execution_id>` (see
+  `using-connection-cli/references/query.md`)
 - `connection_setup(type, intent_text=None)` for credentialed connection setup
 - `install_demo_connection(demo_connection, display_name=None, intent_text=None)`
   for hosted demo connections
