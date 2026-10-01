@@ -11,6 +11,27 @@ setup flow). Both end with the same verification steps inside the workspace.
 
 The in-workspace canonical reference is `/workspace/workflows/setup-connection.md`.
 
+## Authorize an assigned application on first use
+
+List connections before creating one. Okta application discovery can expose
+assigned apps with `authorization_state: "authorization_required"` and
+`queryable: false` in `connections_list` or `connection list --json`.
+
+When the user needs one of these apps, present that entry's `authorization_url`
+as a clickable link. It opens authorization for that existing connection.
+Authorize only the app needed for the current request; leave other pending
+apps alone. Do not create a duplicate with `connection_setup` or `connection add`.
+
+After the user completes authorization, refresh the connection list. Use the
+returned name when `queryable` is true, read its connection docs, and resume the
+requested read. A provider may reuse an existing account and return its name.
+If the user cancels, wait for a request to retry rather than reopening the flow.
+
+Existing usable connections reuse credentials automatically. If a query reports
+`error_kind: "reauthorization_required"`, offer its `authorization_url` for that
+same connection. Refresh readiness afterward. Never automatically replay a
+write or an operation whose effects are uncertain after an error.
+
 ## Path A — install a hosted demo connection
 
 Use this when the user wants to try MarcoPolo without bringing their own
@@ -86,7 +107,8 @@ account.
    ```
 
    On failure, surface `error` and `message` to the user. For credential
-   issues, send them back through `connection_setup` to update credentials.
+   issues, offer the returned `authorization_url` when available; otherwise open
+   the existing connection's settings. Keep its identity rather than creating a duplicate.
 
 2. Read the seeded connection docs.
 

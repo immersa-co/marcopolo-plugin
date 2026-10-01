@@ -43,6 +43,13 @@ to call `workspace_shell`.
 
 ## Read first
 
+When discovery lists an app with `queryable: false`, offer its `authorization_url`
+only if the current user request needs that app. After the user finishes, refresh
+the list and resume the requested read using the returned name. Keep other apps
+pending, reuse completed connections, and do not retry authorization after a
+cancellation without a new user request. Never automatically replay a write after
+an authorization failure. Read `setup-connection` for this workflow.
+
 Before authoring, read what the workspace already says:
 
 - `workspace_shell("cat /workspace/README.md")`

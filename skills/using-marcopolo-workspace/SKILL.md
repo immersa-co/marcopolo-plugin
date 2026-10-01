@@ -48,6 +48,20 @@ By default a query returns only the relation handle (`relation_name` +
 For large results, query the relation in DuckDB rather than pulling every row
 into `data`.
 
+## Connections awaiting authorization
+
+`connections_list` and `connection list --json` can include assigned applications
+that have no provider credentials yet. Entries with `queryable: false` require
+authorization before queries, catalog reads, or connection documentation are
+available. When the user needs such an app, offer only its `authorization_url`.
+Do not send the user through authorization for every listed application.
+
+After completion, refresh the list and resume the requested read using the
+returned connection name. Existing usable credentials are reused automatically.
+On cancellation, wait for the user to request another attempt. On an expired
+grant, query errors include a targeted `authorization_url`; do not create a
+replacement connection or automatically replay a write. See `setup-connection`.
+
 ## Two shell environments
 
 Two shell environments coexist in this session:
