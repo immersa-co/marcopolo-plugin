@@ -6,6 +6,13 @@ workspace_shell("connection list --json")
 
 Discover connections visible in the current workspace.
 
+Tenant-admin exclusions block connection use even for its owner. Ownership
+does not override an exclusion. Re-run `list` after an access change; running
+sessions refresh within a few seconds. If access was revoked, ask a tenant
+admin to restore it. Recreating or resharing the connection is not an access
+recovery step. Tenant admins retain recovery controls in the UI while their
+workspace data access follows the same exclusions.
+
 ## Why use it first
 
 The response is the only authoritative source for what each connection can

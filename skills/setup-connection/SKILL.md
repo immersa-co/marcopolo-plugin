@@ -126,9 +126,10 @@ account.
   flow, wrong host/port, or missing network access. Surface the error
   message to the user; for credential changes, rerun `connection_setup` to
   reissue the setup URL.
-- **Connection not visible in `connection list --json`.** Wait and retry —
-  provisioning may still be running. If it persists, surface that to the
-  user.
+- **Connection not visible in `connection list --json`.** After setup, wait
+  briefly and retry because provisioning may still be running. If an existing
+  connection disappeared after an access change, ask a tenant admin to restore
+  access. An owner cannot bypass an admin exclusion by resharing or reconnecting.
 
 ## Pointers
 
