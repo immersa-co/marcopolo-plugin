@@ -1,7 +1,7 @@
 {
   "name": "marcopolo",
   "displayName": "MarcoPolo",
-  "version": "3.4.0",
+  "version": "4.0.0",
   "description": "Secure, persistent remote workspace for analytics across one or more company data connections",
   "author": {
     "name": "MarcoPolo",

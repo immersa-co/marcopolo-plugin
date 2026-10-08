@@ -1,7 +1,9 @@
 # `connection download` (capability-gated)
 
+MCP tool: `connection_download(connection_name, remote_path, local_path=None, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection download <name> --remote-path <provider-path> [--local-path <workspace-path>] --json")
+connection download <name> --remote-path <provider-path> [--local-path <workspace-path>] --json
 ```
 
 Fetch a provider file into the workspace.
@@ -48,5 +50,5 @@ CSV, Parquet, JSON, and others directly from a path:
 workspace_shell("""cat > connections/DUCKDB/queries/<file>.sql <<'SQL'
 SELECT * FROM read_csv_auto('data/downloads/<file>.csv') LIMIT 100
 SQL""")
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<file>.sql")
 ```

@@ -1,6 +1,6 @@
 ---
 name: using-marcopolo-workspace
-description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use the product MCP data tools versus `workspace_shell`, and how the `connection` CLI fits in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
+description: Orientation for the MarcoPolo remote workspace, what it is, how `/workspace` is laid out, when to use `workspace_shell`, the `connection_*` tools, and `data_query`, and how the `connection` CLI fits in. Use this skill whenever MarcoPolo, the marcopolo MCP server, `workspace_shell`, `/workspace`, connections, or `connection` CLI commands come up. Read this first when entering a MarcoPolo session, before reaching for a more specific skill.
 ---
 
 # Using the MarcoPolo workspace
@@ -9,42 +9,42 @@ MarcoPolo is a persistent remote Linux workspace at `/workspace` for working
 with company data, building dashboards, scheduling jobs, and keeping a durable
 collection of queries, scripts, and artifacts.
 
-## Two execution surfaces
+## Execution surfaces
 
-Two execution surfaces coexist in a MarcoPolo session:
+Three execution surfaces coexist in a MarcoPolo session:
 
-- `workspace_shell` for all agent-side work: query authoring, analytics, DuckDB
-  joins, workspace files, scripts, git, and cron inside `/workspace`.
-- Product MCP data tools (`connections_list`, `data_query`) for generated code
-  that re-queries live data at view or load time — Remote Artifacts, external
-  web apps, scheduled scripts.
+- `workspace_shell` for authoring and shaping: query files, workspace files,
+  DuckDB, scripts, git, and crontab inside `/workspace`.
+- The `connection_*` tools for connection verbs (`connection_query`,
+  `connection_describe`, `connection_test`, and so on). Each runs exactly that
+  `connection` CLI verb in the workspace.
+- `data_query` for generated code that re-queries live data at view or load
+  time — Remote Artifacts, external web apps, scheduled scripts.
 
-For all agent analytics, use `workspace_shell`. Reserve `data_query` for
-programmatic interfaces, not for the agent's own data exploration.
+For all agent analytics, author query files with `workspace_shell` and run
+them with `connection_query`. Reserve `data_query` for programmatic interfaces,
+not for the agent's own data exploration.
 
 ## Session capability detection
 
 Check which tools are available in the current session before choosing a path:
 
-- Sessions with `connections_list` and `data_query` (Claude, Cursor, etc.):
-  - Agent analytics → always use `workspace_shell`
-  - Programmatic interfaces (web apps, scripts, dashboards) → use `data_query`
-- Sessions with only `workspace_shell` (ChatGPT, older sessions):
-  - Agent analytics → use `workspace_shell`
-  - Generated artifact code → use `workspace_shell("connection query <name> --file <file> --json")` (bound with a SQL `LIMIT`), noting in the code that it can be upgraded to `data_query` if the session gains that tool
+- Sessions with the `connection_*` tools: run connection verbs through them.
+- Sessions with only `workspace_shell`: run the same verbs as CLI commands,
+  e.g. `workspace_shell("connection query <name> --file <file> --json")`.
+- Generated artifact code (web apps, dashboards) → use `data_query`.
 
-`workspace_shell` is the primary analytics tool in every session. `data_query`
-is an addition for programmatic interfaces, not a replacement for agent work.
+`data_query` is for programmatic interfaces, not a replacement for agent work.
 
-When using `workspace_shell` for queries, treat results as CLI envelopes:
+`connection_query` results are CLI envelopes in `stdout`:
 
-- rows from `data` (present only when `--include-results` was passed)
+- rows from `data` (present only when `include_results=true` / `--include-results` was passed)
 - `row_count` from `row_count`, otherwise `len(rows)`
 - `run_id` if present
 - `relation_name` if present
 
 By default a query returns only the relation handle (`relation_name` +
-`row_count` + `column_count`); pass `--include-results` for the rows in `data`.
+`row_count` + `column_count`); pass `include_results=true` for the rows in `data`.
 For large results, query the relation in DuckDB rather than pulling every row
 into `data`.
 
@@ -77,8 +77,8 @@ Treat `/workspace` like a checked-out repo. Common shapes:
 - write and edit files: `workspace_shell` with heredocs, `sed`, or other shell
   tools, except managed connection `RULES.md` projections
 - update connection context: write the complete replacement to
-  `connections/<name>/scratch/`, then run
-  `workspace_shell("connection edit-context <name> <source-file>")`
+  `connections/<name>/scratch/` with `workspace_shell`, then run
+  `connection_edit_context(connection_name=<name>, source_file=<source-file>)`
 - run scripts: `workspace_shell("python scripts/<file>.py")`
 - inspect git state: `workspace_shell("git status")`,
   `workspace_shell("git diff")`
@@ -88,14 +88,10 @@ as part of normal work.
 
 ## MCP tool families
 
-Product data tools:
+Workspace tools:
 
-- `connections_list` for connection discovery when available
-- `data_query` for bounded governed query execution when available
-
-Workspace and ext-app tools:
-
-- `workspace_shell(command, timeout=30)` for remote workspace commands. It
+- `workspace_shell(command, timeout=30)` for Unix shell commands in
+  `/workspace` (files, DuckDB, scripts, git, crontab scheduling, diagnostics). It
   returns `execution_id`, `status` (`running`, `succeeded`, `failed`),
   `exit_code`, `stdout`, `stderr`, `failure` (`{kind, message}` or null), and
   `next_actions`. A CLI's JSON envelope is the `stdout` string; when a CLI
@@ -103,9 +99,29 @@ Workspace and ext-app tools:
   keep the last 2 MiB, so trim large output with `head` or a query `LIMIT`.
   The call returns once the command finishes, up to `timeout` (max 300). A
   command outliving `timeout` returns `status: "running"` and keeps going.
-  Don't re-run it; check it with `execution status <execution_id>` (see
+  Don't re-run it; check it with `execution_status(execution_id)` (see
   `using-connection-cli/references/query.md`)
-- `connection_setup(type, intent_text=None)` for credentialed connection setup
+- `execution_status(execution_id)` for the current record of a running or
+  finished execution
+
+Connection tools (each runs exactly that `connection` CLI verb with `--json`
+and returns the same result shape as `workspace_shell`):
+
+- `connections_list()`
+- `connection_add(type, intent?, timeout?)` for credentialed connection setup;
+  returns the browser setup URL
+- `connection_describe(connection_name, database?, table?, timeout?)`
+- `connection_test(connection_name, timeout?)`
+- `connection_browse(connection_name, remote_path="", detailed=false, timeout?)`
+- `connection_download(connection_name, remote_path, local_path?, timeout?)`
+- `connection_upload(connection_name, local_path, remote_path, timeout?)`
+- `connection_edit_context(connection_name, source_file, timeout?)`
+- `connection_query(connection_name, query_file? | operation?, params?, input_data?, include_results=false, timeout?)`
+
+Data and demo tools:
+
+- `data_query(connection_name, query_file, params?, max_rows?)` for generated
+  code and artifacts
 - `install_demo_connection(demo_connection, display_name=None, intent_text=None)`
   for hosted demo connections
 
@@ -115,7 +131,9 @@ you to.
 
 ## The `connection` CLI is the workspace verb surface
 
-For full reference see the `using-connection-cli` skill. The shape:
+For full reference see the `using-connection-cli` skill. Each verb has a
+dedicated `connection_*` tool; the CLI shape, which also works inside
+`workspace_shell` (for example in cron scripts), is:
 
 ```text
 connection <verb> [args] --json
@@ -125,7 +143,7 @@ Common verbs: `list`, `add`, `test`, `describe`, `query`, `browse`, `download`,
 `upload`, `edit-context`. Pass `--json` for every verb except `edit-context`,
 which takes a source file and intentionally has no `--json` flag.
 
-`connection list --json` returns each connection's `capabilities` array. That
+`connections_list` returns each connection's `capabilities` array. That
 list is authoritative. Never call `browse`, `download`, or `upload` on a
 connection unless that verb appears in its capabilities.
 
@@ -171,7 +189,7 @@ Always read first before authoring:
 conventions, while each `connections/<name>/RULES.md` is a managed projection
 of shared tenant context for that connection. Read them before authoring
 queries. After user confirmation, update connection context only through
-the Marcopolo UI or `connection edit-context <name> <source-file>`; direct edits
+the Marcopolo UI or `connection_edit_context`; direct edits
 are not durable and may be overwritten. The CLI source is a complete
 replacement, so start from the current rules unless the user wants to replace
 all existing context.
@@ -179,10 +197,10 @@ all existing context.
 ## DUCKDB is a connection
 
 DUCKDB is the in-workspace analytical connection, backed by
-`.dv/duckdb/workspace.duckdb`. Query it through the `connection` CLI:
+`.dv/duckdb/workspace.duckdb`. Query it with `connection_query`:
 
 ```text
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<file>.sql")
 ```
 
 Use it for joins across connections, intermediate tables, and in-workspace

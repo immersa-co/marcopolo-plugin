@@ -1,7 +1,9 @@
 # `connection query`
 
+MCP tool: `connection_query(connection_name, query_file=None, operation=None, params=None, input_data=None, include_results=False, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs. Tool arguments map to the flags: `query_file` is `--file`, `operation` is `--op-json`, `params` is `--params-json`, `input_data` is `--input-data`, and `include_results` is `--include-results`.
+
 ```
-workspace_shell("connection query <name> --file <query-file> [--params-json <json>] [--include-results] --json")
+connection query <name> --file <query-file> [--params-json <json>] [--include-results] --json
 ```
 
 Execute a saved query file against a connection.
@@ -45,7 +47,7 @@ of `--file`.
   COPY (SELECT * FROM <relation_name>) TO '/workspace/data/downloads/<file>.csv' (HEADER, DELIMITER ',');
   ```
 
-  Run via `workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/export.sql --json")`.
+  Run via `connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/export.sql")`.
 - `--json` — always pass.
 
 ## Path semantics
@@ -91,7 +93,7 @@ connection query <name> --file connections/<name>/queries/foo.json --json
 
 ```python
 import json
-resp = json.loads(result["stdout"])             # the CLI envelope is workspace_shell's stdout
+resp = json.loads(result["stdout"])             # the CLI envelope is the tool result's stdout
 records = json.loads(resp["data"])              # parse data string → list[dict]
 # len(records) is the number of rows returned
 ```
@@ -110,7 +112,7 @@ For aggregations, joins, group-bys, or totals, do not parse a large
 it instead:
 
 ```
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<followup>.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<followup>.sql")
 ```
 
 The DuckDB SQL can reference the materialized `relation_name` directly —
@@ -119,34 +121,33 @@ results and display.
 
 ## Timeout
 
-`connection query` runs via `workspace_shell`. `timeout` is the longest the
+`connection_query` (like `workspace_shell`) takes a `timeout`: the longest the
 call waits (default 30s, max 300s); the call returns as soon as the command
 finishes, so a generous value costs nothing on a fast query. The default suits
 simple queries. For large datasets or slow connections pass 120–300 so the
-result comes back in the same call; use 30–60 for `connection describe`.
+result comes back in the same call; use 30–60 for `connection_describe`.
 
 ```text
-workspace_shell("connection query <name> --file ... --json", timeout=180)
+connection_query(connection_name="<name>", query_file="connections/<name>/queries/<file>", timeout=180)
 ```
 
 A command still running when `timeout` ends comes back with
 `status: "running"` and an `execution_id`, and keeps running for up to 300s in
-total. Do not re-run it. `execution status <execution_id>` answers immediately
+total. Do not re-run it. `execution_status(execution_id)` answers immediately
 with the current record, so wait before you check rather than polling in a
-tight loop, and keep `timeout` above the sleep:
+tight loop:
 
 ```text
-workspace_shell("sleep 30; execution status <execution_id>", timeout=60)
+execution_status(execution_id="<execution_id>")
 ```
 
-The record is JSON in `stdout`: `status` (`running`, `succeeded`, `failed`),
+The record carries `status` (`running`, `succeeded`, `failed`),
 `failure` (`{kind, message}` or null), and `outcome` with `exit_code`,
 `stdout_tail`, and `stderr_tail`. The finished command's CLI envelope is the
-`stdout_tail` string, one level deeper than a query that finished within its
-call:
+`outcome.stdout_tail` string, one level deeper than a query that finished
+within its call:
 
 ```python
-record = json.loads(result["stdout"])
 resp = json.loads(record["outcome"]["stdout_tail"])   # the connection query envelope
 ```
 
@@ -170,8 +171,8 @@ Common causes:
   exit code
 - `data_truncated` present → not a failure; the rows beyond the 1 MiB cap are
   in `relation_name`. Aggregate or filter there rather than paging through them
-- `status: "running"` → wait, then check it with `execution status
-  <execution_id>` instead of re-running it
+- `status: "running"` → wait, then check it with
+  `execution_status(execution_id)` rather than re-running it
 - `failure.kind: "timed_out"` → `failure.message` says which limit was hit. For
   the 300s runtime limit, narrow the query: filter, aggregate at the source, or
   add a `LIMIT`. If the background slot was held, wait for the named execution

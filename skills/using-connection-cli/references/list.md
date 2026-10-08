@@ -1,7 +1,9 @@
 # `connection list`
 
+MCP tool: `connections_list()`. It is the MCP form of this CLI verb. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection list --json")
+connection list --json
 ```
 
 Discover connections visible in the current workspace.
@@ -39,7 +41,7 @@ do not call those verbs unless they appear here.
 ## Common patterns
 
 - Run `list` first whenever you don't already know what's available.
-- Re-run `list` after `connection_setup` or `install_demo_connection` to
+- Re-run `list` after `connection_add` or `install_demo_connection` to
   confirm a new connection appeared.
 - After a job suddenly starts failing, re-run `list` to check whether the
   connection's capabilities changed.

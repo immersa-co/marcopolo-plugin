@@ -10,36 +10,42 @@ metadata snapshots, scripts, dashboards, and schedules, organized as a repo
 with `git status` and `git diff` part of normal work.
 
 Your built-in tools cannot reach this workspace. The `workspace_shell` MCP tool
-is the only way to read and write workspace files, run scripts, drive the
-`connection` and `cron` CLIs, or inspect git inside `/workspace`.
+is the only way to read and write workspace files, run scripts, schedule with
+crontab, or inspect git inside `/workspace`. The `connection_*` tools run the
+`connection` CLI verbs there.
 
 ## Model-facing surfaces
 
-Prefer the product MCP data tools for simple governed reads when the current
-session exposes them:
+Use `workspace_shell(command, timeout=30)` for workspace files, query
+authoring, DuckDB shaping, scripts, git, and crontab scheduling.
 
-- `connections_list`
-- `data_query`
+Run connection verbs through their dedicated tools. Each runs exactly that
+`connection` CLI verb with `--json` and returns the same result shape as
+`workspace_shell` (`execution_id`, `status`, `exit_code`, `stdout`, `stderr`,
+`failure`, `next_actions`):
 
-Use `workspace_shell` for workspace files, query authoring, DuckDB shaping,
-script execution, cron operations, and compatibility fallback work:
+- `connections_list()`
+- `connection_add(type, intent?, timeout?)`
+- `connection_describe(connection_name, database?, table?, timeout?)`
+- `connection_test(connection_name, timeout?)`
+- `connection_browse(connection_name, remote_path="", detailed=false, timeout?)`
+- `connection_download(connection_name, remote_path, local_path?, timeout?)`
+- `connection_upload(connection_name, local_path, remote_path, timeout?)`
+- `connection_edit_context(connection_name, source_file, timeout?)`
+- `connection_query(connection_name, query_file? | operation?, params?, input_data?, include_results=false, timeout?)`
+- `execution_status(execution_id)` for a call that outlived its `timeout`
+  and returned `status: "running"`
 
-- `workspace_shell`
-- `connection_setup`
-- `install_demo_connection`
+Other tools:
 
-Older sessions may expose only `workspace_shell`. In those sessions, use the
-compatibility path for agent-side discovery and bounded queries:
+- `data_query(connection_name, query_file, params?, max_rows?)`
+- `install_demo_connection(demo_connection, display_name?, intent_text?)`
 
-- `workspace_shell("connection list --json")`
-- `workspace_shell("connection query <name> --file <workspace-relative-query-file> --json")`
+Treat query results as CLI envelopes (`stdout`) rather than `data_query`
+payloads. Normalize them before reasoning over rows.
 
-Treat shell query results as CLI envelopes rather than `data_query` payloads.
-Normalize them before reasoning over rows.
-
-Generated dashboards, Remote Artifacts, and external app code should prefer
-`data_query` when the product surface exposes it. Do not teach generated code
-to call `workspace_shell`.
+Generated dashboards, Remote Artifacts, and external app code use
+`data_query`. Do not teach generated code to call `workspace_shell`.
 
 ## Read first
 
@@ -60,11 +66,11 @@ durable and may be overwritten. Users can edit context in the Marcopolo UI.
 After the user confirms a context change, start from the current rules unless
 they want to replace all existing context, write the complete replacement under
 `connections/<name>/scratch/`, and run
-`workspace_shell("connection edit-context <name> <source-file>")`.
+`connection_edit_context(connection_name=<name>, source_file=<source-file>)`.
 
 ## Capabilities are authoritative
 
-`connections_list` or `workspace_shell("connection list --json")` returns each
+`connections_list` returns each
 connection's `capabilities` array. That list is the truth. Never call `browse`,
 `download`, or `upload` on a connection unless that verb is advertised.
 

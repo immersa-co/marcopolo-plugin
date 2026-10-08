@@ -95,23 +95,31 @@ Codex session in this repo.
 
 ## Session compatibility
 
-Newer MarcoPolo sessions may expose the preferred product data tools:
+The MarcoPolo MCP server exposes these tools:
 
-- `connections_list`
-- `data_query`
+- `workspace_shell(command, timeout=30)` for Unix shell commands in
+  `/workspace` (files, DuckDB, scripts, git, crontab scheduling, diagnostics)
+- `connections_list()`
+- `connection_add(type, intent?, timeout?)`
+- `connection_describe(connection_name, database?, table?, timeout?)`
+- `connection_test(connection_name, timeout?)`
+- `connection_browse(connection_name, remote_path="", detailed=false, timeout?)`
+- `connection_download(connection_name, remote_path, local_path?, timeout?)`
+- `connection_upload(connection_name, local_path, remote_path, timeout?)`
+- `connection_edit_context(connection_name, source_file, timeout?)`
+- `connection_query(connection_name, query_file? | operation?, params?, input_data?, include_results=false, timeout?)`
+- `execution_status(execution_id)`
+- `data_query(connection_name, query_file, params?, max_rows?)`
+- `install_demo_connection(demo_connection, display_name?, intent_text?)`
 
-Older sessions may expose only `workspace_shell`. Core querying still works in
-those sessions through the compatibility path:
+Each `connection_*` tool runs exactly that `connection` CLI verb with `--json`
+and returns the same result shape as `workspace_shell`. A call that outlives
+its `timeout` returns `status: "running"` with an `execution_id`; check it with
+`execution_status`.
 
-- `workspace_shell("connection list --json")`
-- bounded `workspace_shell("connection query ... --json")`
-
-The plugin skills and workspace guides are written to prefer the product data
-tools when available and fall back to `workspace_shell` when they are not.
-
-Generated dashboards, Remote Artifacts, and external app code should prefer
-`data_query` when the product surface exposes it. `workspace_shell` is the
-agent-session fallback, not the runtime contract for generated artifacts.
+Generated dashboards, Remote Artifacts, and external app code use `data_query`.
+`workspace_shell` is for agent sessions, not the runtime contract for generated
+artifacts.
 
 ## How to use it
 

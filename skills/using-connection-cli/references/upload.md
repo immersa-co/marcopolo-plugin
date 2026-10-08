@@ -1,7 +1,9 @@
 # `connection upload` (capability-gated)
 
+MCP tool: `connection_upload(connection_name, local_path, remote_path, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection upload <name> --local-path <workspace-file> --remote-path <provider-path> --json")
+connection upload <name> --local-path <workspace-file> --remote-path <provider-path> --json
 ```
 
 Push a workspace file to a provider.

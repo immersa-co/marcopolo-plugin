@@ -1,18 +1,18 @@
 # `connection add`
 
+MCP tool: `connection_add(type, intent=None, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection add --type <CONNECTION_TYPE> [--intent <text>] --json")
+connection add --type <CONNECTION_TYPE> [--intent <text>] --json
 ```
 
 Generate a browser setup URL for a credentialed connection.
 
 ## When to use the CLI vs. the MCP tool
 
-For interactive setup from a session, prefer the `connection_setup` MCP
-tool — it returns the same shape as `connection add` plus a scoped API
-token for the browser flow. The CLI form is the right choice inside
-scripts and scheduled jobs that need to surface a setup URL without going
-through the MCP layer.
+For interactive setup from a session, use the `connection_add` MCP tool. The
+CLI form is the right choice inside scripts and scheduled jobs that need to
+surface a setup URL.
 
 ## Flags
 

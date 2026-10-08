@@ -9,19 +9,19 @@ Use this skill for all agent-side analytics: query authoring, schema exploration
 DuckDB materialization, joins across sources, and file analysis.
 
 **Tool selection:**
-- `workspace_shell("connection query ...")` is the correct tool for all agent
-  analytics. The full result is always materialized into DuckDB; by default the
+- `connection_query(...)` is the correct tool for all agent analytics. Use
+  `workspace_shell` for authoring query files, DuckDB shaping, scripts, and git. The full result is always materialized into DuckDB; by default the
   command returns only the relation handle (`relation_name` + `row_count` +
-  `column_count`), not the rows. Pass `--include-results` when you need the rows
+  `column_count`), not the rows. Pass `include_results=true` when you need the rows
   inline in `data`.
 - `data_query` is for generated code that re-queries live data at view or load
   time: Remote Artifacts, external web apps, scheduled scripts. Do not use it
   for agent analytics or one-off snapshot visualizations — embed those inline.
 
-**Session compatibility:** Some sessions (e.g. ChatGPT) expose only
-`workspace_shell` and do not have `connections_list` or `data_query`. Check
-which tools are available before deciding on a path. `workspace_shell` works
-in every session and is the primary analytics tool in all cases.
+**Session compatibility:** Some sessions expose only `workspace_shell`. Check
+which tools are available before deciding on a path. When the dedicated
+`connection_*` tools are absent, run the same verb through `workspace_shell`
+(for example `workspace_shell("connection query <name> --file <file> --json")`).
 
 ## Required workflow — follow every step
 
@@ -35,10 +35,8 @@ This is the workspace's long-term memory. Read it before touching any connection
 
 ### Step 2 — Discover connections
 
-Use `connections_list` if the current session exposes it. Otherwise:
-
 ```text
-workspace_shell("connection list --json")
+connections_list()
 ```
 
 Pick the connection(s) needed. Confirm `query` appears in each connection's
@@ -65,7 +63,7 @@ workspace_shell("ls connections/<name>/queries/ connections/<name>/metadata/")
 If `describe` is in capabilities and metadata is missing or stale:
 
 ```text
-workspace_shell("connection describe <name> --json")
+connection_describe(connection_name="<name>")
 ```
 
 Prefer adapting an existing query over writing from scratch.
@@ -99,13 +97,13 @@ connections and `.sql` for SQL-native connections.
 ### Step 6 — Execute the query
 
 ```text
-workspace_shell("connection query <name> --file connections/<name>/queries/<filename>.<ext> --json")
+connection_query(connection_name="<name>", query_file="connections/<name>/queries/<filename>.<ext>")
 ```
 
-The full result is always materialized into DuckDB. By default the command
+The full result is always materialized into DuckDB. By default the tool
 returns only the relation handle (`relation_name` + `row_count` +
 `column_count`), not the rows — so a large result never floods context. Query
-the relation in DuckDB (Step 7), or pass `--include-results` to get the rows
+the relation in DuckDB (Step 7), or pass `include_results=true` to get the rows
 inline in `data`, bounding large results with a SQL `LIMIT`. See the
 `using-connection-cli` skill for full flag reference and timeout guidance.
 
@@ -120,7 +118,7 @@ Each upstream query materializes as a `relation_name` in DuckDB. Use it for
 aggregations, joins across connections, and transformations:
 
 ```text
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<file>.sql")
 ```
 
 Save reusable joins in `connections/DUCKDB/queries/`.
@@ -137,7 +135,7 @@ COPY (SELECT * FROM <relation_name>) TO '/workspace/data/downloads/<filename>.cs
 Run via:
 
 ```text
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/export.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/export.sql")
 ```
 
 ### Step 9 — Offer to save learnings
@@ -149,14 +147,14 @@ limitations. Ask the user to confirm before writing.
 For connection-specific context, start from the current `RULES.md` unless the
 user intentionally wants to replace all existing context. Write the complete
 proposed replacement to a workspace file under `connections/<name>/scratch/`,
-then submit it through the connection command:
+then submit it through the dedicated tool:
 
 ```text
-workspace_shell("connection edit-context <name> connections/<name>/scratch/<file>.md")
+connection_edit_context(connection_name="<name>", source_file="connections/<name>/scratch/<file>.md")
 ```
 
-The command replaces that connection's tenant context for every user who can
-see it. It intentionally has no `--json` flag. Users can also update context in
+The tool overwrites that connection's tenant context for every user who can
+see it. Users can also update context in
 the Marcopolo UI. Never edit the projected `connections/<name>/RULES.md`
 directly because those changes are not durable and may be overwritten.
 Workspace-wide context remains `/workspace/RULES.md` and is not handled by
@@ -171,7 +169,7 @@ DuckDB is the in-workspace analytical connection.
 3. Execute through DuckDB.
 
    ```text
-   workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+   connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<file>.sql")
    ```
 
 ## Work with files in the remote workspace
@@ -186,26 +184,26 @@ DuckDB can read CSV, Parquet, and JSON files directly:
 workspace_shell("""cat > connections/DUCKDB/queries/<file>.sql <<'SQL'
 SELECT * FROM read_csv_auto('data/uploads/<file>.csv') LIMIT 100
 SQL""")
-workspace_shell("connection query DUCKDB --file connections/DUCKDB/queries/<file>.sql --json")
+connection_query(connection_name="DUCKDB", query_file="connections/DUCKDB/queries/<file>.sql")
 ```
 
 ## Common pitfalls
 
-- The `connection` CLI only exists inside the remote workspace — always use
-  `workspace_shell` for workspace commands.
-- Trust `connection list --json` or `connections_list` for capabilities.
+- The `connection` CLI only exists inside the remote workspace — use the
+  `connection_*` tools, or `workspace_shell` for other workspace commands.
+- Trust `connections_list` for capabilities.
 - Query through named files, not inline SQL.
 - **Rows are opt-in.** By default a query returns only the relation handle, not
   the rows; the full dataset is materialized in DuckDB regardless. Pass
-  `--include-results` for the rows inline (with a SQL `LIMIT` for large results),
+  `include_results=true` for the rows inline (with a SQL `LIMIT` for large results),
   or query the relation in DuckDB.
-- Query file paths in `--file` resolve from `/workspace`, not from your current
+- Query file paths in `query_file` resolve from `/workspace`, not from your current
   directory — always include the `connections/<name>/` prefix. A bare
   `queries/<file>` resolves to `/workspace/queries/<file>` and fails with
   "No such file or directory" even if you just created the file via
   `cd <connection-dir> && cat > queries/<file>`.
 - Do not edit a connection's projected `RULES.md` directly. Use
-  `connection edit-context <name> <source-file>` after user confirmation.
+  `connection_edit_context` after user confirmation.
 
 ## Pointers
 

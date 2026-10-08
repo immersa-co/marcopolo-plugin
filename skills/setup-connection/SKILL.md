@@ -45,25 +45,21 @@ account.
 1. Generate the setup URL via the MCP tool.
 
    ```
-   connection_setup(type="<canonical-type>", intent_text="<optional free text>")
+   connection_add(type="<canonical-type>", intent="<optional free text>")
    ```
 
    `type` should be a canonical type value (`pg`, `mysql`, `snowflake`,
    `bigquery`, `s3`, `google_drive`, `salesforce`, `local_file`, etc.). If
-   unsure, pass the user's words as `intent_text` and a best-guess `type` —
+   unsure, pass the user's words as `intent` and a best-guess `type` —
    the tool will resolve via intent if `type` is non-canonical. If still
-   unknown, the response returns `valid_types` and `suggested_types`; pick
+   unknown, the CLI envelope in `stdout` returns `suggested_types`; pick
    from those and retry.
 
-   On success, the response includes:
+   On success, the CLI envelope in `stdout` includes:
    - `url` — open this in a browser; the user signs in and configures
      credentials
    - `workflow_type` — typically `oauth` or `configure`
    - `instructions` and `next_actions` — surface these to the user
-   - `configuration_schema` (for `configure` workflows) — the fields the
-     setup UI will collect
-   - `workspace_ssh_keypair` (for connections that support SSH tunnelling)
-     — show the public key so the user can authorize it on their bastion
 
 2. Surface the URL to the user and wait. Do not try to complete setup from
    the session — the user has to click through the browser flow.
@@ -71,7 +67,7 @@ account.
 3. Once the user says they're done, confirm the connection is visible.
 
    ```
-   workspace_shell("connection list --json")
+   connections_list()
    ```
 
    If it doesn't appear yet, wait briefly and retry — provisioning can take
@@ -82,11 +78,11 @@ account.
 1. Verify credentials.
 
    ```
-   workspace_shell("connection test <name> --json")
+   connection_test(connection_name="<name>")
    ```
 
    On failure, surface `error` and `message` to the user. For credential
-   issues, send them back through `connection_setup` to update credentials.
+   issues, send them back through `connection_add` to update credentials.
 
 2. Read the seeded connection docs.
 
@@ -100,7 +96,7 @@ account.
 3. Write initial metadata snapshots.
 
    ```
-   workspace_shell("connection describe <name> --json")
+   connection_describe(connection_name="<name>")
    ```
 
    This populates `connections/<name>/metadata/`. The snapshot files become
@@ -117,16 +113,16 @@ account.
 
 ## Troubleshooting
 
-- **`connection_setup` returns `Unknown connection type`.** The response
+- **`connection_add` returns `Unknown connection type`.** The response
   includes `valid_types` and `suggested_types`. Pick a canonical value and
-  retry. If user intent is natural language, also pass `intent_text`.
+  retry. If user intent is natural language, also pass `intent`.
 - **`install_demo_connection` returns `ambiguous`.** Surface
   `available_demo_connections` to the user and retry with a specific id.
 - **`connection test` fails after setup.** Likely cause: incomplete browser
   flow, wrong host/port, or missing network access. Surface the error
-  message to the user; for credential changes, rerun `connection_setup` to
+  message to the user; for credential changes, rerun `connection_add` to
   reissue the setup URL.
-- **Connection not visible in `connection list --json`.** Wait and retry —
+- **Connection not visible in `connections_list`.** Wait and retry —
   provisioning may still be running. If it persists, surface that to the
   user.
 

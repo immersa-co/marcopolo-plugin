@@ -1,7 +1,9 @@
 # `connection describe`
 
+MCP tool: `connection_describe(connection_name, database=None, table=None, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection describe <name> [--database <db>] [--table <t>] --json")
+connection describe <name> [--database <db>] [--table <t>] --json
 ```
 
 Write metadata snapshots into `connections/<name>/metadata/` and return

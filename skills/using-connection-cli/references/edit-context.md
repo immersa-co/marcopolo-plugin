@@ -1,10 +1,12 @@
 # `connection edit-context`
 
+MCP tool: `connection_edit_context(connection_name, source_file, timeout=None)`. It runs this CLI verb and returns the result shape of `workspace_shell`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 Replace the shared tenant context for one connection after the user confirms
 the proposed change.
 
 ```text
-workspace_shell("connection edit-context <name> connections/<name>/scratch/<file>.md")
+connection edit-context <name> connections/<name>/scratch/<file>.md
 ```
 
 The second argument is a workspace Markdown file containing the complete

@@ -1,7 +1,9 @@
 # `connection browse` (capability-gated)
 
+MCP tool: `connection_browse(connection_name, remote_path="", detailed=False, timeout=None)`. It runs this CLI verb with `--json` and returns the result shape of `workspace_shell`; the CLI envelope is `stdout`. The CLI form below also works inside `workspace_shell`, for example in scripts and cron jobs.
+
 ```
-workspace_shell("connection browse <name> [--remote-path <provider-path>] [--detailed] --json")
+connection browse <name> [--remote-path <provider-path>] [--detailed] --json
 ```
 
 List files at a provider-side path on storage connections (S3, Azure

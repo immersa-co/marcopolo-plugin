@@ -6,16 +6,30 @@ description: Reference for the in-workspace `connection` CLI — verb shape, JSO
 # Using the `connection` CLI
 
 The `connection` CLI is the verb surface for all connection work inside
-the MarcoPolo workspace. It runs in the workspace pod; from a session,
-invoke it through `workspace_shell`:
+the MarcoPolo workspace. From a session, each verb has a dedicated MCP tool
+that runs exactly that verb with `--json`:
 
-```
-workspace_shell("connection <verb> [args] --json")
-```
+| Verb | MCP tool |
+|---|---|
+| `list` | `connections_list()` |
+| `add` | `connection_add(type, intent?, timeout?)` |
+| `test` | `connection_test(connection_name, timeout?)` |
+| `describe` | `connection_describe(connection_name, database?, table?, timeout?)` |
+| `query` | `connection_query(connection_name, query_file? \| operation?, params?, input_data?, include_results=false, timeout?)` |
+| `browse` | `connection_browse(connection_name, remote_path="", detailed=false, timeout?)` |
+| `download` | `connection_download(connection_name, remote_path, local_path?, timeout?)` |
+| `upload` | `connection_upload(connection_name, local_path, remote_path, timeout?)` |
+| `edit-context` | `connection_edit_context(connection_name, source_file, timeout?)` |
 
-Pass `--json` for every verb except `edit-context`. That command intentionally
-has no `--json` flag because its successful result is consumed by the
-authenticated MarcoPolo shell adapter.
+Each `connection_*` tool returns the same result shape as `workspace_shell`:
+`execution_id`, `status` (`running`, `succeeded`, `failed`), `exit_code`,
+`stdout` (the CLI JSON envelope), `stderr`, `failure`, and `next_actions`. A
+call that outlives `timeout` returns `status: "running"` with an
+`execution_id`; check it with `execution_status(execution_id)`.
+
+The CLI form `connection <verb> [args] --json` also works inside
+`workspace_shell`, which is how scripts and cron jobs invoke it. `edit-context`
+intentionally has no `--json` flag.
 
 ## JSON envelope
 
@@ -55,7 +69,7 @@ capabilities — both come from the same source.
 | `upload` (gated) | Push a workspace file to the provider | `references/upload.md` |
 | `edit-context` | Replace shared tenant context from a workspace Markdown file | `references/edit-context.md` |
 
-Read the per-verb reference before running a verb you haven't run
+Read the per-verb reference (it opens with the matching MCP tool and its argument names) before running a verb you haven't run
 recently, especially for flags. The references include the exact
 response shape, common pitfalls, and follow-on commands.
 
@@ -75,7 +89,7 @@ See `references/query.md` for the full flag contract and response shape.
 
 ## Self-discovery
 
-When in doubt, ask the CLI directly:
+When in doubt, ask the CLI directly through the workspace shell:
 
 ```
 workspace_shell("connection --help")
