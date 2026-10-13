@@ -92,7 +92,16 @@ Product data tools:
 
 Workspace and ext-app tools:
 
-- `workspace_shell(command, timeout=30)` for remote workspace commands
+- `workspace_shell(command, timeout=30)` for remote workspace commands. It
+  returns `execution_id`, `status` (`running`, `succeeded`, `failed`),
+  `exit_code`, `stdout`, `stderr`, `failure` (`{kind, message}` or null), and
+  `next_actions`. A CLI's JSON envelope is the `stdout` string. A command
+  outliving `timeout` returns `status: "running"` — check it with
+  `execution status <execution_id>`
+- A workspace admission failure means the command did not start and can be
+  retried. If the tool says the command may have run but its result was lost,
+  inspect its effects before retrying a command that writes data. Use
+  `execution status <execution_id>` when an execution ID is available.
 - `connection_setup(type, intent_text=None)` for credentialed connection setup
 - `install_demo_connection(demo_connection, display_name=None, intent_text=None)`
   for hosted demo connections
