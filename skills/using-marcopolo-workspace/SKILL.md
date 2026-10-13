@@ -154,11 +154,17 @@ Always read first before authoring:
   `using-connection-cli` skills — they are prerequisites, not optional
   further reading.
 
-`RULES.md` files are long-term memory — the workspace-level one holds general
-conventions, and each `connections/<name>/RULES.md` holds connection-specific
-facts: field quirks, reliable query patterns, naming conventions accumulated
-from prior sessions. Read them before authoring queries and update them when
-you discover new facts.
+`connections/<name>/SYNTAX.md` contains the generated technical guide for the
+connection: query syntax or API operations, usage conventions, and references
+for detailed schemas. Read it to learn how to use the connection.
+
+`RULES.md` files hold user-managed context. The workspace-level file contains
+general conventions; each connection's file contains business definitions,
+dataset interpretation, and organization-specific guidance. Read both technical
+guidance and business context before authoring queries. Update connection context
+through the Marcopolo UI or `connection edit-context <name> <source-file>`;
+direct edits to the projected file are not durable. Marcopolo manages generated
+API documentation in `SYNTAX.md`; do not copy it into user-managed `RULES.md`.
 
 ## DUCKDB is a connection
 
