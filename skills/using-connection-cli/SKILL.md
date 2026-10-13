@@ -29,6 +29,10 @@ On failure: `error`, usually `message`, and often `next_actions` and
 (for unknown types) `suggested_types`. On success: verb-specific fields
 documented in the per-verb references below.
 
+In a scoped session, provider responses may be withheld after execution. A failed
+write response does not imply rollback: do not automatically retry. Refer to
+`references/query.md` for the supported response-filtering paths and limitations.
+
 ## Capability rule
 
 `connection list --json` returns each connection's `capabilities` array.

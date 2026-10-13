@@ -6,6 +6,32 @@ workspace_shell("connection query <name> --file <query-file> [--params-json <jso
 
 Execute a saved query file against a connection.
 
+## Scoped sessions: response filtering
+
+Scoped provider results pass through private DuckDB row/field filtering before
+workspace persistence. `row_count`, `column_count`, returned rows, and local
+exports describe the published result. Query arguments cannot override trusted
+policy parameter values.
+
+Straightforward records need reliable source identity and the fields required
+by the policy. Missing identity, lookup records, nested policy paths, or
+unsupported field types cause the result to be withheld. Query aliases and
+filenames do not establish source identity. Raw provider errors are not returned.
+
+This milestone does not classify requests, enforce CRUD actions, or rewrite
+provider queries. A write can complete before its records or status are withheld.
+**Do not automatically retry a failed write**: a failure response does not mean
+the provider rolled it back. Check the provider state or ask the administrator.
+Provider-side hidden-field predicates and renamed/encoded fields retain their
+response-filtering limitations; do not claim arbitrary-query protection.
+
+Scoped raw downloads, describe snapshots, and connection tests are unavailable.
+Uploads can execute but their opaque responses are withheld. Use published
+relations for local CSV exports. Local `connection query DUCKDB` remains
+available in the user CLI. Query files and upload inputs must be within
+`/workspace`; do not use admin configuration paths or attempt alternate routes
+to bypass a withheld result.
+
 ## Why file-based, not inline
 
 `--file` requires an existing workspace file, not inline SQL. This is
