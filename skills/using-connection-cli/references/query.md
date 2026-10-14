@@ -18,8 +18,17 @@ by the policy. Missing identity, lookup records, nested policy paths, or
 unsupported field types cause the result to be withheld. Query aliases and
 filenames do not establish source identity. Raw provider errors are not returned.
 
-This milestone does not classify requests, enforce CRUD actions, or rewrite
-provider queries. A write can complete before its records or status are withheld.
+The shared runtime identifies the source object from the final prepared request
+for every connector. Use supported single-object record requests with the policy
+fields intact. Fully qualified SQL identifiers help when database/schema defaults
+cannot be resolved. Ambiguous joins, unsupported endpoints, aggregates, and
+opaque native expressions can be withheld. Adding a `source` parameter does not
+establish identity, and object classification does not recover field aliases.
+
+This milestone does not enforce CRUD actions, rewrite provider queries, or fetch
+policy lookup records. A write can complete before its records or status are withheld.
+Resource rules select response filters, not an object allowlist; CRUD action lists
+are not enforced. Do not describe this milestone as full policy enforcement.
 **Do not automatically retry a failed write**: a failure response does not mean
 the provider rolled it back. Check the provider state or ask the administrator.
 Provider-side hidden-field predicates and renamed/encoded fields retain their
