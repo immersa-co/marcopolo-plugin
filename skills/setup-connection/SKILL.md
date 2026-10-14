@@ -82,7 +82,8 @@ account.
 Create custom API connectors from the website's Connections page. Provide the
 API documentation there, then save credentials or complete OAuth in the setup
 UI. Never ask users to paste credentials into a conversation or workspace file.
-Documentation discovery locates the OpenAPI source using specification metadata;
+Documentation discovery searches linked documentation and indexes in bounded
+excerpts and identifies the OpenAPI source using specification metadata;
 the generator reads its complete contract. Users can provide a documentation
 page linking to the specification without extracting or rewriting its schemas.
 
