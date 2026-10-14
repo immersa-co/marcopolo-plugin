@@ -77,6 +77,21 @@ account.
    If it doesn't appear yet, wait briefly and retry — provisioning can take
    a moment.
 
+## Custom API connectors
+
+Create custom API connectors from the website's Connections page. Provide the
+API documentation there, then save credentials or complete OAuth in the setup
+UI. Never ask users to paste credentials into a conversation or workspace file.
+
+Setup tests a read-only operation through the generated client. Eligible request
+contract failures trigger automatic repair and retesting before publication.
+Credential errors require the user to update credentials or account permissions.
+If setup stops, share its connector and run references with the Marcopolo team;
+do not patch the installed generated client in the workspace.
+
+A ready connection has passed its selected connectivity check. Other operations
+and pagination may still need verification; consult the reported API coverage.
+
 ## Post-install verification (both paths)
 
 1. Verify credentials.
