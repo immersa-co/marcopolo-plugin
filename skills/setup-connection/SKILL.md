@@ -86,6 +86,12 @@ Documentation discovery searches linked documentation and indexes in bounded
 excerpts and identifies the OpenAPI source using specification metadata;
 the generator reads its complete contract. Users can provide a documentation
 page linking to the specification without extracting or rewriting its schemas.
+Self-service setup supports one complete OpenAPI specification with up to 50
+operations (each HTTP method/path pair counts separately). If the requested API
+exceeds this limit or requires multiple specifications, direct the user to
+Marcopolo support with the setup reference. Do not recommend repeated retries or
+silently substitute one endpoint or API area for the requested API. A complete,
+explicitly requested API-area specification can be set up on its own.
 
 Setup tests a read-only operation through the generated client. Eligible request
 contract failures trigger automatic repair and retesting before publication.
