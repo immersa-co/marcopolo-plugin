@@ -83,9 +83,11 @@ Create custom API connectors from the website's Connections page. Provide the
 API documentation there, then save credentials or complete OAuth in the setup
 UI. Never ask users to paste credentials into a conversation or workspace file.
 Documentation discovery searches linked documentation and indexes in bounded
-excerpts and identifies the OpenAPI source using specification metadata;
-the generator reads its complete contract. Users can provide a documentation
-page linking to the specification without extracting or rewriting its schemas.
+excerpts and prefers a published OpenAPI 3 source. When no source is published,
+it can author an OpenAPI request contract from a complete HTTP API reference,
+including authentication documentation. This fallback requires more model work;
+missing request details stop setup with a request for better documentation.
+Users do not need to convert their reference into OpenAPI themselves.
 Self-service setup supports one complete OpenAPI specification with up to 150
 operations (each HTTP method/path pair counts separately). If the requested API
 exceeds this limit or requires multiple specifications, direct the user to
