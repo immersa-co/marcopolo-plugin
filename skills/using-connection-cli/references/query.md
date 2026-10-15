@@ -6,6 +6,29 @@ workspace_shell("connection query <name> --file <query-file> [--params-json <jso
 
 Execute a saved query file against a connection.
 
+## Generated API tables
+
+For a custom OpenAPI connection, read its `SYNTAX.md` and use `connection
+describe <name> --json` to discover source tables. Save a JSON query:
+
+```json
+{"table":"<documented_table>","parameters":{},"max_rows":1000}
+```
+
+`parameters` contains the generated operation's argument names; request bodies
+go under `body`. The source table definition selects records, types columns,
+and follows documented pagination. The result is a DuckDB relation, including
+when no rows match. Join using documented identifiers and preserve the stated
+row grain. Nested collections remain JSON columns unless the guide defines a
+separate table for them.
+
+Read the completeness and stop reason in `next_actions` before treating an
+aggregate as a source-wide total. `max_rows` defaults to 1000 (maximum 100000).
+Unknown pagination returns one page with incomplete coverage. Use `request`
+for operations without a table mapping or to inspect an unexpected response.
+Connection-specific business definitions belong in `RULES.md`; `SYNTAX.md`
+describes the source schema and query routes.
+
 ## Why file-based, not inline
 
 `--file` requires an existing workspace file, not inline SQL. This is

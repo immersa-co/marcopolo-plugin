@@ -95,14 +95,18 @@ Marcopolo support with the setup reference. Do not recommend repeated retries or
 silently substitute one endpoint or API area for the requested API. A complete,
 explicitly requested API-area specification can be set up on its own.
 
-Setup tests a read-only operation through the generated client. Eligible request
-contract failures trigger automatic repair and retesting before publication.
+Setup generates source table definitions from response schemas and documentation,
+then tests a selected read-only table through the generated client. Validation
+checks record shape, required columns, types, keys, and bounded pagination
+coverage. Eligible request or table-mapping failures trigger automatic repair
+and retesting before publication.
 Credential errors require the user to update credentials or account permissions.
 If setup stops, share its connector and run references with the Marcopolo team;
 do not patch the installed generated client in the workspace.
 
-A ready connection has passed its selected connectivity check. Other operations
-and pagination may still need verification; consult the reported API coverage.
+A ready connection has passed its selected table check. Other tables and
+pagination may still need verification; consult the source guide and reported
+coverage. An empty sample preserves schema but cannot verify nonempty values.
 
 ## Post-install verification (both paths)
 

@@ -3,6 +3,10 @@
 Use when the connection advertises `request`. Discover its operation IDs and
 parameters through the CLI:
 
+For analysis, prefer the source tables documented in `SYNTAX.md` through
+`connection query`. That path handles declared pagination and materializes typed
+DuckDB relations. `request` provides direct access to individual API operations.
+
 ```sh
 connection request <name> --describe --json
 connection request <name> --describe --operation <operationId> --json
