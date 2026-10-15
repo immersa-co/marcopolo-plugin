@@ -83,7 +83,10 @@ Create custom API connectors from the website's Connections page. Provide the
 API documentation there, then save credentials or complete OAuth in the setup
 UI. Never ask users to paste credentials into a conversation or workspace file.
 Documentation discovery searches linked documentation and indexes in bounded
-excerpts and prefers a published OpenAPI 3 source. When no source is published,
+excerpts and prefers a published OpenAPI 3 source. A single URL that directly
+returns an OpenAPI 3 document skips model-driven discovery; normalization and
+source table modeling still run where needed. Multiple submitted URLs are
+considered together during discovery. When no source is published,
 it can author an OpenAPI request contract from a complete HTTP API reference,
 including authentication documentation. This fallback requires more model work;
 missing request details stop setup with a request for better documentation.
