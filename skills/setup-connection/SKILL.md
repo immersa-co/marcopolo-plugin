@@ -77,6 +77,40 @@ account.
    If it doesn't appear yet, wait briefly and retry — provisioning can take
    a moment.
 
+## Custom API connectors
+
+Create custom API connectors from the website's Connections page. Provide the
+API documentation there, then save credentials or complete OAuth in the setup
+UI. Never ask users to paste credentials into a conversation or workspace file.
+Documentation discovery searches linked documentation and indexes in bounded
+excerpts and prefers a published OpenAPI 3 source. A single URL that directly
+returns an OpenAPI 3 document skips model-driven discovery; normalization and
+source table modeling still run where needed. Multiple submitted URLs are
+considered together during discovery. When no source is published,
+it can author an OpenAPI request contract from a complete HTTP API reference,
+including authentication documentation. This fallback requires more model work;
+missing request details stop setup with a request for better documentation.
+Users do not need to convert their reference into OpenAPI themselves.
+Self-service setup supports one complete OpenAPI specification with up to 150
+operations (each HTTP method/path pair counts separately). If the requested API
+exceeds this limit or requires multiple specifications, direct the user to
+Marcopolo support with the setup reference. Do not recommend repeated retries or
+silently substitute one endpoint or API area for the requested API. A complete,
+explicitly requested API-area specification can be set up on its own.
+
+Setup generates source table definitions from response schemas and documentation,
+then tests a selected read-only table through the generated client. Validation
+checks record shape, required columns, types, keys, and bounded pagination
+coverage. Eligible request or table-mapping failures trigger automatic repair
+and retesting before publication.
+Credential errors require the user to update credentials or account permissions.
+If setup stops, share its connector and run references with the Marcopolo team;
+do not patch the installed generated client in the workspace.
+
+A ready connection has passed its selected table check. Other tables and
+pagination may still need verification; consult the source guide and reported
+coverage. An empty sample preserves schema but cannot verify nonempty values.
+
 ## Post-install verification (both paths)
 
 1. Verify credentials.
