@@ -117,6 +117,15 @@ account.
 
 ## Troubleshooting
 
+- **Custom connector documentation discovery fails.** Custom connector generation
+  runs in the website. Supply a public OpenAPI URL or a readable API reference
+  with links to its request and authentication documentation. Linked raw Markdown
+  files in public repositories are valid sources; directory and index pages need
+  links to the actual reference pages. The reader does not execute JavaScript.
+  A JavaScript-only portal needs an alternate readable source. Preserve the
+  user's requested API scope; do not select a subset merely to bypass a setup
+  limit. If the source remains unreadable or exceeds the supported scope, share
+  the setup reference with Marcopolo support rather than repeatedly retrying.
 - **`connection_setup` returns `Unknown connection type`.** The response
   includes `valid_types` and `suggested_types`. Pick a canonical value and
   retry. If user intent is natural language, also pass `intent_text`.
