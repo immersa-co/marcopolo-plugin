@@ -1,6 +1,6 @@
 ---
 name: using-connection-cli
-description: Reference for the in-workspace `connection` CLI — verb shape, JSON envelope, the capability rule, and per-verb flag details. Use this skill whenever any `connection` verb (`list`, `add`, `test`, `describe`, `query`, `request`, `browse`, `download`, `upload`) is about to run, when looking up flags, when checking whether a verb is allowed by a connection's capabilities, or when reading the JSON response. Consult it even for routine commands — guessing flag names or capability-gating leads to wasted work and surprising failures.
+description: Reference for the in-workspace `connection` CLI — verb shape, JSON envelope, the capability rule, and per-verb flag details. Use this skill whenever any `connection` verb (`list`, `add`, `test`, `describe`, `query`, `browse`, `download`, `upload`) is about to run, when looking up flags, when checking whether a verb is allowed by a connection's capabilities, or when reading the JSON response. Consult it even for routine commands — guessing flag names or capability-gating leads to wasted work and surprising failures.
 ---
 
 # Using the `connection` CLI
@@ -32,7 +32,7 @@ documented in the per-verb references below.
 ## Capability rule
 
 `connection list --json` returns each connection's `capabilities` array.
-That list is **authoritative** — never call `request`, `browse`, `download`, or
+That list is **authoritative** — never call `browse`, `download`, or
 `upload` on a connection unless the verb appears in its capabilities.
 
 The reason: capabilities depend on connection type, the user's auth
@@ -50,7 +50,6 @@ capabilities — both come from the same source.
 | `test` | Verify stored credentials | `references/test.md` |
 | `describe` | Write metadata snapshots into `connections/<name>/metadata/` | `references/describe.md` |
 | `query` | Execute a saved query file; materialize result into DuckDB | `references/query.md` |
-| `request` (gated) | Run an OpenAPI operation and preserve its HTTP response | `references/request.md` |
 | `browse` (gated) | List provider-side files for storage connections | `references/browse.md` |
 | `download` (gated) | Fetch a provider file into the workspace | `references/download.md` |
 | `upload` (gated) | Push a workspace file to the provider | `references/upload.md` |

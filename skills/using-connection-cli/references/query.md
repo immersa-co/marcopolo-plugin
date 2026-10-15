@@ -24,10 +24,34 @@ separate table for them.
 
 Read the completeness and stop reason in `next_actions` before treating an
 aggregate as a source-wide total. `max_rows` defaults to 1000 (maximum 100000).
-Unknown pagination returns one page with incomplete coverage. Use `request`
-for operations without a table mapping or to inspect an unexpected response.
+Unknown pagination returns one page with incomplete coverage.
 Connection-specific business definitions belong in `RULES.md`; `SYNTAX.md`
 describes the source schema and query routes.
+
+## Generated API operations
+
+For operations without a table mapping, including writes, save an operation query:
+
+```json
+{"operation":"<documented_operationId>","parameters":{}}
+```
+
+Run it with the same `connection query <name> --file <query-file> --json`
+command. Discover operations with `connection describe <name> --database
+operations --json`; inspect an operation's input and response schema with
+`--database operations --table <operationId> --json`.
+
+Each operation query makes one request and stores rows in DuckDB. Objects become
+one row, arrays become rows, scalars use a `value` column, and nested values stay
+in JSON columns. An optional dotted `result_path`, such as `data.items`, selects
+records inside an envelope. Empty successful responses produce a `success` /
+`http_status` acknowledgment row. Use `--include-results` only when the returned
+rows are needed in context.
+
+Operation queries do not automatically paginate or retry writes. Successful reads
+alone do not establish complete source coverage; prefer a documented table query
+for analysis. If a write fails or has an ambiguous result, check its outcome before
+attempting it again.
 
 ## Why file-based, not inline
 
