@@ -124,7 +124,8 @@ account.
   links to the actual reference pages. The reader does not execute JavaScript.
   A JavaScript-only portal needs an alternate readable source. Preserve the
   user's requested API scope; do not select a subset merely to bypass a setup
-  limit. If the source remains unreadable or exceeds the supported scope, share
+  limit. Self-service setup supports up to 200 HTTP method/path operations in one
+  contract. If the source remains unreadable or exceeds the supported scope, share
   the setup reference with Marcopolo support rather than repeatedly retrying.
 - **`connection_setup` returns `Unknown connection type`.** The response
   includes `valid_types` and `suggested_types`. Pick a canonical value and
