@@ -123,9 +123,14 @@ account.
   files in public repositories are valid sources; directory and index pages need
   links to the actual reference pages. The reader does not execute JavaScript.
   A JavaScript-only portal needs an alternate readable source. Preserve the
-  user's requested API scope; do not select a subset merely to bypass a setup
-  limit. Self-service setup supports up to 200 HTTP method/path operations in one
-  contract. If the source remains unreadable or exceeds the supported scope, share
+  user's requested API area. When a reference lists several versions of one API,
+  setup selects the latest published version unless the user specified another.
+  Do not select individual endpoints merely to bypass a setup limit. Self-service
+  setup supports up to 200 HTTP method/path operations in one contract. If the
+  source contains operations that only accept unsupported request bodies, such as
+  multipart file uploads, setup records those operations as unavailable while
+  retaining supported operations. If the source remains unreadable or exceeds the
+  supported scope, share
   the setup reference with Marcopolo support rather than repeatedly retrying.
 - **`connection_setup` returns `Unknown connection type`.** The response
   includes `valid_types` and `suggested_types`. Pick a canonical value and
