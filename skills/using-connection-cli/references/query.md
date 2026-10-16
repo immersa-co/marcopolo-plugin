@@ -6,6 +6,30 @@ workspace_shell("connection query <name> --file <query-file> [--params-json <jso
 
 Execute a saved query file against a connection.
 
+## SQL result policy
+
+An admin can assign a per-user `policy.sql` in the tenant configuration. The
+shared connector query path applies it to the returned DataFrame, exposed as
+`data` in a private in-memory DuckDB, before saving the result to the workspace.
+The same policy applies to every connector query file and operation payload.
+If no active SQL file exists for the user, query behavior is unchanged.
+The runtime relies on filesystem access rather than validating policy ownership,
+permission modes, or execution UID, and it follows symlinks. Policy protection
+is the responsibility of deployment and filesystem permissions.
+
+Returned rows, fields, counts, and local exports describe the policy's output.
+The policy must be one SELECT query; it cannot access external files or publish
+the raw response separately. Query parameters do not override the assigned SQL.
+The policy must work with the actual fields returned by each provider request.
+
+If filtering fails, the query returns the DuckDB error type and message and
+does not save an unfiltered result. A provider write may already have completed.
+Native DuckDB diagnostics can contain input values; error text is not sanitized.
+**Do not automatically retry a failed write**; a policy error is not evidence
+that the provider rolled back the operation. Local `DUCKDB` queries,
+browse/download paths, and independent provider-side file writes are outside
+this response-filtering path.
+
 ## Why file-based, not inline
 
 `--file` requires an existing workspace file, not inline SQL. This is
