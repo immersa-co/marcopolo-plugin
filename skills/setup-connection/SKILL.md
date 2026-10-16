@@ -115,8 +115,35 @@ account.
    Expect: `README.md`, `RULES.md`, `SYNTAX.md`, `queries/`, `metadata/`,
    `profile/`, `scratch/`.
 
+## Custom connector validation
+
+Custom connector authoring runs in the website. After the user supplies credentials,
+setup tests a read-only sample and can repair supported request or table-mapping
+failures automatically. Wait for setup to finish before querying. A failed setup
+includes a support reference; preserve it when asking the Marcopolo team to investigate.
+When setup reports a model-call, token, or time limit, Retry continues from saved
+research and candidate files with a new run budget. Editing the documentation
+inputs starts fresh authoring for those sources.
+The CLI's `connection test` repeats the saved check and does not start AI authoring
+or repair. Never send credentials to an authoring agent or put them in documentation.
+
 ## Troubleshooting
 
+- **Custom connector documentation discovery fails.** Custom connector generation
+  runs in the website. Supply a public OpenAPI URL or a readable API reference
+  with links to its request and authentication documentation. Linked raw Markdown
+  files in public repositories are valid sources; directory and index pages need
+  links to the actual reference pages. The reader does not execute JavaScript.
+  A JavaScript-only portal needs an alternate readable source. Preserve the
+  user's requested API area. When a reference lists several versions of one API,
+  setup selects the latest published version unless the user specified another.
+  Do not select individual endpoints merely to bypass a setup limit. Self-service
+  setup supports up to 200 HTTP method/path operations in one contract. If the
+  source contains operations that only accept unsupported request bodies, such as
+  multipart file uploads, setup records those operations as unavailable while
+  retaining supported operations. If the source remains unreadable or exceeds the
+  supported scope, share
+  the setup reference with Marcopolo support rather than repeatedly retrying.
 - **`connection_setup` returns `Unknown connection type`.** The response
   includes `valid_types` and `suggested_types`. Pick a canonical value and
   retry. If user intent is natural language, also pass `intent_text`.
