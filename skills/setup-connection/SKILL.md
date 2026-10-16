@@ -115,6 +115,15 @@ account.
    Expect: `README.md`, `RULES.md`, `SYNTAX.md`, `queries/`, `metadata/`,
    `profile/`, `scratch/`.
 
+## Custom connector validation
+
+Custom connector authoring runs in the website. After the user supplies credentials,
+setup tests a read-only sample and can repair supported request or table-mapping
+failures automatically. Wait for setup to finish before querying. A failed setup
+includes a support reference; preserve it when asking the Marcopolo team to investigate.
+The CLI's `connection test` repeats the saved check and does not start AI authoring
+or repair. Never send credentials to an authoring agent or put them in documentation.
+
 ## Troubleshooting
 
 - **Custom connector documentation discovery fails.** Custom connector generation
