@@ -121,6 +121,8 @@ Custom connector authoring runs in the website. After the user supplies credenti
 setup tests a read-only sample and can repair supported request or table-mapping
 failures automatically. Wait for setup to finish before querying. A failed setup
 includes a support reference; preserve it when asking the Marcopolo team to investigate.
+Retrying interrupted generation reuses saved research and candidate files. Editing
+the documentation inputs starts fresh authoring for those sources.
 The CLI's `connection test` repeats the saved check and does not start AI authoring
 or repair. Never send credentials to an authoring agent or put them in documentation.
 
