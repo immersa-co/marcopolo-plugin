@@ -68,7 +68,8 @@ account.
    For a Microsoft Fabric Warehouse or Lakehouse SQL analytics endpoint, use
    `fabsql`. Enter the Fabric SQL connection string hostname as `server` and
    the Warehouse or Lakehouse item name as `database`. Setup requires a
-   Microsoft Entra service principal's `client_id` and `client_secret`.
+   Microsoft Entra service principal's `client_id`, `client_secret`, and
+   `tenant_id`.
    Fabric SQL endpoints use TCP port 1433. The `mssql` connection type uses
    SQL authentication and cannot authenticate to Fabric.
 
