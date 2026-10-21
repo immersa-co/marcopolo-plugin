@@ -65,11 +65,11 @@ account.
    - `workspace_ssh_keypair` (for connections that support SSH tunnelling)
      — show the public key so the user can authorize it on their bastion
 
-   For a Microsoft Fabric Warehouse or Lakehouse SQL analytics endpoint, use
-   `fabsql`. Enter the Fabric SQL connection string hostname as `server` and
-   the Warehouse or Lakehouse item name as `database`. Setup requires a
-   Microsoft Entra service principal's `client_id`, `client_secret`, and
-   `tenant_id`.
+   For a Microsoft Fabric Warehouse or Lakehouse SQL analytics endpoint, select
+   **Microsoft Fabric SQL** (`fabsql`). Enter the Fabric SQL connection string
+   hostname as `server` and the Warehouse or Lakehouse item name as `database`.
+   Setup requires a Microsoft Entra service principal's `client_id`,
+   `client_secret`, and `tenant_id`.
    Fabric SQL endpoints use TCP port 1433. The `mssql` connection type uses
    SQL authentication and cannot authenticate to Fabric.
 
