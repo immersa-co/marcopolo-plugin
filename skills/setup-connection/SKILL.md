@@ -68,12 +68,13 @@ account.
 2. Surface the URL to the user and wait. Do not try to complete setup from
    the session — the user has to click through the browser flow.
 
-   For Slack, the setup UI offers Personal Slack OAuth, Slack bot OAuth, and
-   manual bot token entry. Personal OAuth uses the authorized user's channel
-   permissions and supports message search; the connection remains private.
-   Bot connections can be shared, but the bot must join each channel whose
-   messages it needs to read. Either OAuth option may require workspace app
-   approval.
+   For Slack, the setup UI offers a personal Slack account, a Slack app connected
+   through OAuth, and an existing Slack app connected with its bot token.
+   Personal OAuth uses the authorized user's channel permissions and supports
+   message search. If shared, other users receive that person's Slack access
+   through the connection. App connections use a bot user and can read messages
+   only in channels where the app has been added. Either OAuth option may require
+   workspace app approval.
 
 3. Once the user says they're done, confirm the connection is visible.
 
